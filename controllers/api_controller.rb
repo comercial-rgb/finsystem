@@ -147,6 +147,36 @@ module FinSystem
       end
 
       # ========================================
+      # EXCLUIR MOVIMENTAÇÃO VIA API
+      # DELETE /api/movimentacoes/:id
+      # ========================================
+      delete '/api/movimentacoes/:id' do
+        begin
+          mov = Models::Movimentacao.find(params[:id].to_i)
+          halt 404, { error: 'Movimentação não encontrada', code: 'NOT_FOUND' }.to_json unless mov
+
+          Models::Movimentacao.excluir(params[:id].to_i)
+
+          usuario_integracao = FinSystem::Database.db[:usuarios]
+            .where(ativo: true, nivel_acesso: 'admin')
+            .order(:id).first
+
+          Models::AuditLog.registrar(
+            usuario_id: usuario_integracao&.dig(:id) || 0,
+            acao: 'delete',
+            entidade: 'movimentacao',
+            entidade_id: params[:id].to_i,
+            detalhes: "API: Movimentação excluída ##{params[:id]} - #{mov[:descricao]}",
+            ip: request.ip
+          )
+
+          { success: true, message: 'Movimentação excluída com sucesso' }.to_json
+        rescue => e
+          halt 500, { error: "Erro interno: #{e.message}", code: 'INTERNAL_ERROR' }.to_json
+        end
+      end
+
+      # ========================================
       # LISTAR EMPRESAS (para configuração)
       # GET /api/empresas
       # ========================================
