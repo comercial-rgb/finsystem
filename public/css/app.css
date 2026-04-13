@@ -1,0 +1,39 @@
+/* FinSystem - Estilos Globais */
+body { font-family: 'Inter', sans-serif; }
+
+/* Sidebar */
+.sidebar { transition: width 0.3s ease; }
+.sidebar-collapsed { width: 72px; }
+.sidebar-expanded { width: 260px; }
+
+/* Animações */
+.fade-in { animation: fadeIn 0.3s ease-in; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #1e293b; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+/* Inputs */
+input[type="date"],
+input[type="number"],
+input[type="text"],
+select,
+textarea {
+  font-size: 14px;
+}
+
+/* Login / Recovery pages */
+.gradient-bg {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+}
+
+.card-glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+}

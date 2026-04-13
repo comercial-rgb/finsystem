@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinSystem - Link Enviado</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-md px-6">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-green-600 mb-4">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-white">Link Gerado!</h1>
+      <p class="text-slate-400 mt-1">Olá, <strong class="text-white"><%= @user_nome %></strong></p>
+    </div>
+
+    <!-- Card -->
+    <div class="card-glass rounded-2xl p-8">
+      <div class="bg-blue-500/20 border border-blue-500/30 text-blue-300 px-4 py-3 rounded-lg mb-6 text-sm">
+        <p class="font-medium mb-2">Em um sistema em produção, este link seria enviado por email.</p>
+        <p>Como estamos em ambiente local, use o link abaixo para redefinir sua senha:</p>
+      </div>
+
+      <div class="bg-slate-800/80 border border-slate-600/50 rounded-xl p-4 mb-6">
+        <p class="text-xs text-slate-400 mb-2">Link de redefinição (válido por 1 hora):</p>
+        <a href="<%= @reset_link %>" class="text-indigo-400 hover:text-indigo-300 text-sm break-all transition">
+          <%= request.base_url %><%= @reset_link %>
+        </a>
+      </div>
+
+      <a href="<%= @reset_link %>"
+         class="block w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-center transition-all duration-200 transform hover:scale-[1.02]">
+        Redefinir Senha Agora
+      </a>
+
+      <div class="mt-4 text-center">
+        <a href="/login" class="text-sm text-indigo-400 hover:text-indigo-300 transition">
+          &larr; Voltar ao login
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

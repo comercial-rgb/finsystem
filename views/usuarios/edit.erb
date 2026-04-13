@@ -1,0 +1,39 @@
+<!-- views/usuarios/edit.erb - Editar usuário -->
+
+<div class="max-w-xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="/usuarios" class="p-2 text-slate-400 hover:text-slate-600 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <h1 class="text-2xl font-bold text-slate-800">Editar Usuário: <%= @usuario[:nome] %></h1>
+  </div>
+
+  <form action="/usuarios/<%= @usuario[:id] %>" method="POST" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
+    <input type="hidden" name="_method" value="PUT">
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">Nome</label>
+      <input type="text" name="nome" value="<%= @usuario[:nome] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+      <input type="email" name="email" value="<%= @usuario[:email] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">Nova Senha (deixe em branco para manter)</label>
+      <input type="password" name="senha" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="••••••••">
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">Nível de Acesso</label>
+      <select name="nivel_acesso" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+        <% FinSystem::Config::ACCESS_LEVELS.each do |key, val| %>
+          <option value="<%= key %>" <%= @usuario[:nivel_acesso] == key ? 'selected' : '' %>><%= val[:label] %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <a href="/usuarios" class="px-5 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50">Cancelar</a>
+      <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Salvar</button>
+    </div>
+  </form>
+</div>

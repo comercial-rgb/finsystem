@@ -1,0 +1,187 @@
+<!-- views/movimentacoes/index.erb - Listagem de movimentações -->
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Movimentações</h1>
+    <p class="text-slate-500 text-sm mt-1"><%= nome_mes(@mes) %>/<%= @ano %></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="/movimentacoes/transferencia" class="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+      Transferência
+    </a>
+    <a href="/movimentacoes/nova" class="px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Nova Movimentação
+    </a>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
+  <form method="GET" action="/movimentacoes" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+    <div class="lg:col-span-2">
+      <input type="text" name="busca" value="<%= @busca %>" placeholder="Buscar por descrição..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+    </div>
+    <select name="empresa_id" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+      <option value="">Todas Empresas</option>
+      <% @empresas.each do |emp| %>
+        <option value="<%= emp[:id] %>" <%= @empresa_id.to_s == emp[:id].to_s ? 'selected' : '' %>><%= emp[:nome_fantasia] %></option>
+      <% end %>
+    </select>
+    <select name="tipo" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+      <option value="">Todos Tipos</option>
+      <option value="receita" <%= @tipo == 'receita' ? 'selected' : '' %>>Receitas</option>
+      <option value="despesa" <%= @tipo == 'despesa' ? 'selected' : '' %>>Despesas</option>
+    </select>
+    <select name="conta_bancaria_id" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+      <option value="">Todos Bancos</option>
+      <% @contas.each do |c| %>
+        <option value="<%= c[:id] %>" <%= @conta_bancaria_id.to_s == c[:id].to_s ? 'selected' : '' %>><%= c[:banco] %> - <%= c[:empresa_nome] %></option>
+      <% end %>
+    </select>
+    <select name="status" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+      <option value="">Todos Status</option>
+      <option value="confirmado" <%= @status == 'confirmado' ? 'selected' : '' %>>Confirmado</option>
+      <option value="pendente" <%= @status == 'pendente' ? 'selected' : '' %>>Pendente</option>
+      <option value="conciliado" <%= @status == 'conciliado' ? 'selected' : '' %>>Conciliado</option>
+    </select>
+    <select name="mes" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+      <% meses_select.each do |num, nome| %>
+        <option value="<%= num %>" <%= @mes == num ? 'selected' : '' %>><%= nome %></option>
+      <% end %>
+    </select>
+    <select name="ano" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+      <% anos_select.each do |a| %>
+        <option value="<%= a %>" <%= @ano == a ? 'selected' : '' %>><%= a %></option>
+      <% end %>
+    </select>
+    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">Filtrar</button>
+  </form>
+</div>
+
+<!-- Resumo do filtro -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+    <p class="text-xs text-emerald-600 font-semibold uppercase">Total Receitas</p>
+    <p class="text-xl font-bold text-emerald-700 mt-1"><%= fmt_moeda(@total_receitas) %></p>
+  </div>
+  <div class="bg-red-50 rounded-xl p-4 border border-red-200">
+    <p class="text-xs text-red-600 font-semibold uppercase">Total Despesas</p>
+    <p class="text-xl font-bold text-red-700 mt-1"><%= fmt_moeda(@total_despesas) %></p>
+  </div>
+  <div class="<%= @saldo_periodo >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200' %> rounded-xl p-4 border">
+    <p class="text-xs <%= @saldo_periodo >= 0 ? 'text-blue-600' : 'text-orange-600' %> font-semibold uppercase">Saldo do Período</p>
+    <p class="text-xl font-bold <%= @saldo_periodo >= 0 ? 'text-blue-700' : 'text-orange-700' %> mt-1"><%= fmt_moeda(@saldo_periodo) %></p>
+  </div>
+</div>
+
+<!-- Tabela -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-xs text-slate-500 uppercase tracking-wide bg-slate-50">
+          <th class="px-4 py-3">Data</th>
+          <th class="px-4 py-3">Tipo</th>
+          <th class="px-4 py-3">Descrição</th>
+          <th class="px-4 py-3">Categoria</th>
+          <th class="px-4 py-3">Cliente/Fornecedor</th>
+          <th class="px-4 py-3">Empresa</th>
+          <th class="px-4 py-3">Banco</th>
+          <th class="px-4 py-3 text-right">Valor</th>
+          <th class="px-4 py-3 text-right">Lucro</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3 text-center">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @movimentacoes.each do |m| %>
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fmt_data(m[:data_movimentacao]) %></td>
+            <td class="px-4 py-3"><%= badge_tipo(m[:tipo]) %></td>
+            <td class="px-4 py-3">
+              <div class="font-medium text-slate-800 max-w-[200px] truncate"><%= m[:descricao] %></div>
+              <% if m[:is_antecipacao] %>
+                <span class="text-xs text-purple-600 font-medium">⚡ Antecipação</span>
+              <% end %>
+              <% if m[:numero_documento] %>
+                <div class="text-xs text-slate-400">Doc: <%= m[:numero_documento] %></div>
+              <% end %>
+            </td>
+            <td class="px-4 py-3">
+              <% if m[:categoria_nome] %>
+                <span class="inline-flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full" style="background-color: <%= m[:categoria_cor] %>"></span>
+                  <span class="text-slate-600 text-xs"><%= m[:categoria_nome] %></span>
+                </span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-slate-600 text-xs"><%= m[:cliente_nome] || m[:fornecedor_nome] || '-' %></td>
+            <td class="px-4 py-3 text-slate-600 text-xs"><%= m[:empresa_nome] %></td>
+            <td class="px-4 py-3 text-slate-600 text-xs"><%= m[:banco_nome] %></td>
+            <td class="px-4 py-3 text-right font-bold <%= cor_valor(m[:tipo]) %> whitespace-nowrap">
+              <%= prefixo_valor(m[:tipo]) %> <%= fmt_moeda(m[:valor_bruto]) %>
+            </td>
+            <td class="px-4 py-3 text-right text-sm">
+              <% if m[:lucro] && m[:lucro] > 0 %>
+                <span class="text-emerald-600 font-medium"><%= fmt_moeda(m[:lucro]) %></span>
+              <% else %>
+                <span class="text-slate-300">-</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3"><%= badge_status(m[:status]) %></td>
+            <td class="px-4 py-3 text-center">
+              <div class="flex items-center justify-center gap-1">
+                <a href="/movimentacoes/<%= m[:id] %>/editar" class="p-1.5 text-slate-400 hover:text-indigo-600 transition" title="Editar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </a>
+                <% unless m[:conciliado] %>
+                  <form action="/movimentacoes/<%= m[:id] %>/conciliar" method="POST" class="inline">
+                    <button type="submit" class="p-1.5 text-slate-400 hover:text-blue-600 transition" title="Conciliar">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </button>
+                  </form>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <% if @movimentacoes.empty? %>
+    <div class="text-center py-12">
+      <p class="text-slate-400 text-sm">Nenhuma movimentação encontrada com estes filtros</p>
+    </div>
+  <% end %>
+
+  <!-- Paginação + Export -->
+  <div class="px-5 py-3 border-t border-slate-100 flex flex-wrap justify-between items-center bg-slate-50 gap-3">
+    <span class="text-xs text-slate-500"><%= @total_registros %> movimentações (página <%= @page %> de <%= @total_pages %>)</span>
+    <div class="flex items-center gap-2">
+      <% if @total_pages > 1 %>
+        <% if @page > 1 %>
+          <a href="/movimentacoes?page=<%= @page - 1 %>&mes=<%= @mes %>&ano=<%= @ano %>&empresa_id=<%= @empresa_id %>&tipo=<%= @tipo %>&conta_bancaria_id=<%= @conta_bancaria_id %>&status=<%= @status %>&busca=<%= @busca %>" class="px-3 py-1 text-xs bg-white border border-slate-300 rounded hover:bg-slate-50">&laquo; Anterior</a>
+        <% end %>
+        <% (1..@total_pages).each do |p| %>
+          <% if p == @page %>
+            <span class="px-3 py-1 text-xs bg-indigo-600 text-white rounded"><%= p %></span>
+          <% elsif (p - @page).abs <= 2 || p == 1 || p == @total_pages %>
+            <a href="/movimentacoes?page=<%= p %>&mes=<%= @mes %>&ano=<%= @ano %>&empresa_id=<%= @empresa_id %>&tipo=<%= @tipo %>&conta_bancaria_id=<%= @conta_bancaria_id %>&status=<%= @status %>&busca=<%= @busca %>" class="px-3 py-1 text-xs bg-white border border-slate-300 rounded hover:bg-slate-50"><%= p %></a>
+          <% elsif (p - @page).abs == 3 %>
+            <span class="text-xs text-slate-400">...</span>
+          <% end %>
+        <% end %>
+        <% if @page < @total_pages %>
+          <a href="/movimentacoes?page=<%= @page + 1 %>&mes=<%= @mes %>&ano=<%= @ano %>&empresa_id=<%= @empresa_id %>&tipo=<%= @tipo %>&conta_bancaria_id=<%= @conta_bancaria_id %>&status=<%= @status %>&busca=<%= @busca %>" class="px-3 py-1 text-xs bg-white border border-slate-300 rounded hover:bg-slate-50">Próxima &raquo;</a>
+        <% end %>
+      <% end %>
+      <a href="/relatorios/exportar_csv?mes=<%= @mes %>&ano=<%= @ano %>&empresa_id=<%= @empresa_id %>&conta_bancaria_id=<%= @conta_bancaria_id %>"
+         class="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1 ml-3">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        Exportar CSV
+      </a>
+    </div>
+  </div>
+</div>

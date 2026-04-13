@@ -1,0 +1,83 @@
+<!-- views/empresas/index.erb - Listagem de empresas do grupo -->
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Empresas do Grupo</h1>
+    <p class="text-slate-500 text-sm mt-1">4 empresas · 2 países</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <% @empresas.each do |emp| %>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold
+                      <%= emp[:empresa][:pais] == 'BR' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700' %>">
+            <%= emp[:empresa][:pais] == 'BR' ? '🇧🇷' : '🇺🇸' %>
+          </div>
+          <div>
+            <h2 class="font-semibold text-slate-800"><%= emp[:empresa][:nome_fantasia] %></h2>
+            <p class="text-xs text-slate-400"><%= emp[:empresa][:razao_social] %></p>
+          </div>
+        </div>
+        <a href="/empresas/<%= emp[:empresa][:id] %>" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Detalhes &rarr;</a>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <span class="text-slate-500 text-xs uppercase tracking-wide">CNPJ/EIN</span>
+            <p class="font-medium text-slate-800 mt-0.5"><%= emp[:empresa][:cnpj_ein] %></p>
+          </div>
+          <div>
+            <span class="text-slate-500 text-xs uppercase tracking-wide">Regime</span>
+            <p class="font-medium text-slate-800 mt-0.5"><%= emp[:empresa][:regime_tributario] || '-' %></p>
+          </div>
+          <div>
+            <span class="text-slate-500 text-xs uppercase tracking-wide">Local</span>
+            <p class="font-medium text-slate-800 mt-0.5"><%= emp[:empresa][:cidade] %>, <%= emp[:empresa][:estado] %></p>
+          </div>
+          <div>
+            <span class="text-slate-500 text-xs uppercase tracking-wide">País</span>
+            <p class="font-medium text-slate-800 mt-0.5"><%= emp[:empresa][:pais] == 'BR' ? 'Brasil' : 'Estados Unidos' %></p>
+          </div>
+        </div>
+
+        <!-- Sócios -->
+        <div>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Sócios</h3>
+          <div class="space-y-2">
+            <% emp[:socios].each do |s| %>
+              <div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700">
+                    <%= s[:nome][0] %>
+                  </div>
+                  <span class="text-sm text-slate-700"><%= s[:nome] %></span>
+                </div>
+                <span class="text-sm font-bold text-indigo-600"><%= fmt_percentual(s[:percentual_participacao]) %></span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Contas Bancárias -->
+        <div>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Contas Bancárias</h3>
+          <% if emp[:contas].empty? %>
+            <p class="text-xs text-slate-400">Nenhuma conta cadastrada</p>
+          <% else %>
+            <div class="flex flex-wrap gap-2">
+              <% emp[:contas].each do |c| %>
+                <span class="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-600">
+                  🏦 <%= c[:banco] %> (<%= c[:moeda] %>)
+                </span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

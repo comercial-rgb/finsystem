@@ -1,0 +1,116 @@
+<!-- views/fornecedores/form.erb - Formulário de fornecedor (novo/editar) -->
+
+<% 
+  dados_bancarios = {}
+  if @fornecedor[:dados_bancarios_json] && !@fornecedor[:dados_bancarios_json].empty?
+    begin
+      dados_bancarios = JSON.parse(@fornecedor[:dados_bancarios_json]) 
+    rescue
+      dados_bancarios = {}
+    end
+  end
+%>
+
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="/fornecedores" class="p-2 text-slate-400 hover:text-slate-600 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <h1 class="text-2xl font-bold text-slate-800"><%= @fornecedor[:id] ? 'Editar Fornecedor' : 'Novo Fornecedor' %></h1>
+  </div>
+
+  <form action="<%= @fornecedor[:id] ? "/fornecedores/#{@fornecedor[:id]}" : '/fornecedores/criar' %>" method="POST" class="space-y-6">
+    <% if @fornecedor[:id] %>
+      <input type="hidden" name="_method" value="PUT">
+    <% end %>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">Dados do Fornecedor</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Nome / Razão Social *</label>
+          <input type="text" name="nome" value="<%= @fornecedor[:nome] %>" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">CNPJ / CPF / EIN</label>
+          <input type="text" name="cnpj_cpf_ein" value="<%= @fornecedor[:cnpj_cpf_ein] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
+          <select name="tipo_fornecedor" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="rede_credenciada" <%= @fornecedor[:tipo] == 'rede_credenciada' ? 'selected' : '' %>>Rede Credenciada</option>
+            <option value="servico" <%= @fornecedor[:tipo] == 'servico' ? 'selected' : '' %>>Serviço</option>
+            <option value="produto" <%= @fornecedor[:tipo] == 'produto' ? 'selected' : '' %>>Produto</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
+          <input type="text" name="categoria" value="<%= @fornecedor[:categoria] %>" placeholder="posto, oficina, loja..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Empresa Vinculada</label>
+          <select name="empresa_id" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="">-- Nenhuma --</option>
+            <% @empresas.each do |emp| %>
+              <option value="<%= emp[:id] %>" <%= @fornecedor[:empresa_id].to_s == emp[:id].to_s ? 'selected' : '' %>><%= emp[:nome_fantasia] %></option>
+            <% end %>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">País</label>
+          <select name="pais" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="BR" <%= @fornecedor[:pais] == 'BR' || @fornecedor[:pais].nil? ? 'selected' : '' %>>Brasil</option>
+            <option value="US" <%= @fornecedor[:pais] == 'US' ? 'selected' : '' %>>Estados Unidos</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <input type="email" name="email" value="<%= @fornecedor[:email] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Telefone</label>
+          <input type="text" name="telefone" value="<%= @fornecedor[:telefone] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Cidade</label>
+          <input type="text" name="cidade" value="<%= @fornecedor[:cidade] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Estado</label>
+          <input type="text" name="estado" value="<%= @fornecedor[:estado] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+      </div>
+    </div>
+
+    <!-- Dados Bancários -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">Dados Bancários (para repasse)</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Banco</label>
+          <input type="text" name="banco" value="<%= dados_bancarios['banco'] %>" placeholder="Itaú, Sicredi..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Agência</label>
+          <input type="text" name="agencia" value="<%= dados_bancarios['agencia'] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Conta</label>
+          <input type="text" name="conta_bancaria" value="<%= dados_bancarios['conta'] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">PIX</label>
+          <input type="text" name="pix" value="<%= dados_bancarios['pix'] %>" placeholder="CPF, email, telefone ou chave..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-3">
+      <a href="/fornecedores" class="px-6 py-2.5 text-slate-600 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50">Cancelar</a>
+      <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+        <%= @fornecedor[:id] ? 'Atualizar' : 'Cadastrar' %>
+      </button>
+    </div>
+  </form>
+</div>

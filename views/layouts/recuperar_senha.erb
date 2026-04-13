@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinSystem - Recuperar Senha</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-md px-6">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 mb-4">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-white">Recuperar Senha</h1>
+      <p class="text-slate-400 mt-1">Informe seu email para receber o link de redefinição</p>
+    </div>
+
+    <!-- Card -->
+    <div class="card-glass rounded-2xl p-8">
+      <% if defined?(@erro) && @erro %>
+        <div class="bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-3 rounded-lg mb-6 text-sm">
+          <%= @erro %>
+        </div>
+      <% end %>
+
+      <form action="/auth/recuperar-senha" method="POST" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Email cadastrado</label>
+          <input type="email" name="email" required
+                 class="w-full px-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                 placeholder="seu@email.com">
+        </div>
+
+        <button type="submit"
+                class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900">
+          Enviar Link de Recuperação
+        </button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <a href="/login" class="text-sm text-indigo-400 hover:text-indigo-300 transition">
+          &larr; Voltar ao login
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

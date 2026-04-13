@@ -1,0 +1,47 @@
+# FinSystem .gitignore
+
+# Dados locais
+data/
+*.db
+
+# Uploads locais
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Variáveis de ambiente
+.env
+.env.local
+.env.production
+
+# Ruby / Gems
+*.gem
+.bundle/
+vendor/bundle/
+
+# Logs
+log/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporários
+tmp/
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/

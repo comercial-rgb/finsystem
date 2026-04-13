@@ -1,0 +1,138 @@
+<!-- views/pessoal/edit.erb - Editar lançamento pessoal -->
+
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="/pessoal" class="p-2 text-slate-400 hover:text-slate-600 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <h1 class="text-2xl font-bold text-slate-800">Editar Lançamento Pessoal</h1>
+  </div>
+
+  <form action="/pessoal/<%= @movimentacao[:id] %>" method="POST" enctype="multipart/form-data" class="space-y-6">
+    <input type="hidden" name="_method" value="PUT">
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <!-- Tipo -->
+      <div class="grid grid-cols-3 gap-3 mb-6">
+        <label class="cursor-pointer">
+          <input type="radio" name="tipo" value="receita" class="hidden peer" <%= @movimentacao[:tipo] == 'receita' ? 'checked' : '' %>>
+          <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all text-center">
+            <p class="font-semibold text-sm">💰 Receita</p>
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="tipo" value="despesa" class="hidden peer" <%= @movimentacao[:tipo] == 'despesa' ? 'checked' : '' %>>
+          <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-red-500 peer-checked:bg-red-50 transition-all text-center">
+            <p class="font-semibold text-sm">📤 Despesa</p>
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="tipo" value="investimento" class="hidden peer" <%= @movimentacao[:tipo] == 'investimento' ? 'checked' : '' %>>
+          <div class="p-3 rounded-xl border-2 border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all text-center">
+            <p class="font-semibold text-sm">📈 Investimento</p>
+          </div>
+        </label>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Data *</label>
+          <input type="date" name="data_movimentacao" value="<%= @movimentacao[:data_movimentacao] %>" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Valor *</label>
+          <input type="text" name="valor" required value="<%= fmt_valor_input(@movimentacao[:valor]) %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm moeda-br">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Descrição *</label>
+          <input type="text" name="descricao" required value="<%= @movimentacao[:descricao] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
+          <select name="categoria_id" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="">-- Selecione --</option>
+            <% @categorias.each do |c| %>
+              <option value="<%= c[:id] %>" <%= @movimentacao[:categoria_id].to_s == c[:id].to_s ? 'selected' : '' %>>
+                <%= c[:tipo]&.capitalize %>: <%= c[:nome] %>
+              </option>
+            <% end %>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Forma de Pagamento</label>
+          <select name="forma_pagamento" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="pix" <%= @movimentacao[:forma_pagamento] == 'pix' ? 'selected' : '' %>>PIX</option>
+            <option value="cartao_credito" <%= @movimentacao[:forma_pagamento] == 'cartao_credito' ? 'selected' : '' %>>Cartão de Crédito</option>
+            <option value="cartao_debito" <%= @movimentacao[:forma_pagamento] == 'cartao_debito' ? 'selected' : '' %>>Cartão de Débito</option>
+            <option value="dinheiro" <%= @movimentacao[:forma_pagamento] == 'dinheiro' ? 'selected' : '' %>>Dinheiro</option>
+            <option value="ted" <%= @movimentacao[:forma_pagamento] == 'ted' ? 'selected' : '' %>>TED</option>
+            <option value="boleto" <%= @movimentacao[:forma_pagamento] == 'boleto' ? 'selected' : '' %>>Boleto</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Observações</label>
+          <textarea name="observacoes" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"><%= @movimentacao[:observacoes] %></textarea>
+        </div>
+        <div class="md:col-span-2 flex items-center gap-4">
+          <label class="flex items-center gap-2">
+            <input type="checkbox" name="recorrente" value="true" class="rounded border-slate-300 text-violet-600 focus:ring-violet-500" <%= @movimentacao[:recorrente] ? 'checked' : '' %>>
+            <span class="text-sm text-slate-700">Lançamento recorrente</span>
+          </label>
+          <select name="frequencia_recorrencia" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="mensal" <%= @movimentacao[:frequencia_recorrencia] == 'mensal' ? 'selected' : '' %>>Mensal</option>
+            <option value="semanal" <%= @movimentacao[:frequencia_recorrencia] == 'semanal' ? 'selected' : '' %>>Semanal</option>
+            <option value="quinzenal" <%= @movimentacao[:frequencia_recorrencia] == 'quinzenal' ? 'selected' : '' %>>Quinzenal</option>
+            <option value="trimestral" <%= @movimentacao[:frequencia_recorrencia] == 'trimestral' ? 'selected' : '' %>>Trimestral</option>
+            <option value="anual" <%= @movimentacao[:frequencia_recorrencia] == 'anual' ? 'selected' : '' %>>Anual</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comprovantes -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="text-lg font-semibold text-slate-800 mb-4">Comprovantes</h2>
+
+      <% if @comprovantes && !@comprovantes.empty? %>
+        <div class="space-y-2 mb-4">
+          <% @comprovantes.each do |comp| %>
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                <span class="text-sm text-slate-700"><%= comp[:nome_original] %></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <a href="/pessoal/comprovantes/<%= comp[:id] %>/download" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">Download</a>
+                <form action="/pessoal/comprovantes/<%= comp[:id] %>" method="POST" class="inline" onsubmit="return confirm('Remover?')">
+                  <input type="hidden" name="_method" value="DELETE">
+                  <button class="text-xs text-red-500 hover:text-red-700 font-medium">Remover</button>
+                </form>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Anexar comprovante</label>
+        <input type="file" name="comprovante" accept=".pdf,.jpg,.jpeg,.png,.webp" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
+        <p class="text-xs text-slate-400 mt-1">PDF, JPG, PNG ou WebP (max 10MB)</p>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center">
+      <!-- Excluir -->
+      <form action="/pessoal/<%= @movimentacao[:id] %>" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir este lançamento?')">
+        <input type="hidden" name="_method" value="DELETE">
+        <button class="px-4 py-2 text-red-600 bg-red-50 border border-red-200 rounded-lg text-sm font-medium hover:bg-red-100 transition">
+          Excluir Lançamento
+        </button>
+      </form>
+
+      <div class="flex gap-3">
+        <a href="/pessoal" class="px-6 py-2.5 text-slate-600 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="px-6 py-2.5 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700">Atualizar</button>
+      </div>
+    </div>
+  </form>
+</div>

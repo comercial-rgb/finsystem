@@ -1,0 +1,209 @@
+<!-- views/empresas/show.erb - Detalhes da empresa -->
+
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <a href="/empresas" class="p-2 text-slate-400 hover:text-slate-600 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800"><%= @empresa[:nome_fantasia] %></h1>
+      <p class="text-slate-500 text-sm"><%= @empresa[:razao_social] %> · <%= @empresa[:pais] == 'BR' ? '🇧🇷 Brasil' : '🇺🇸 EUA' %></p>
+    </div>
+  </div>
+  <button onclick="document.getElementById('form-editar-empresa').classList.toggle('hidden')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+    Editar Empresa
+  </button>
+</div>
+
+<!-- Form Editar Empresa (oculto por padrão) -->
+<div id="form-editar-empresa" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+  <h2 class="font-semibold text-slate-800 mb-4">Editar Informações da Empresa</h2>
+  <form action="/empresas/<%= @empresa[:id] %>" method="POST">
+    <input type="hidden" name="_method" value="PUT">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Razão Social *</label>
+        <input type="text" name="razao_social" value="<%= @empresa[:razao_social] %>" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Nome Fantasia *</label>
+        <input type="text" name="nome_fantasia" value="<%= @empresa[:nome_fantasia] %>" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1"><%= @empresa[:pais] == 'BR' ? 'CNPJ' : 'EIN' %> *</label>
+        <input type="text" name="cnpj_ein" value="<%= @empresa[:cnpj_ein] %>" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Regime Tributário</label>
+        <select name="regime_tributario" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+          <option value="">-- Selecione --</option>
+          <% if @empresa[:pais] == 'BR' %>
+            <option value="Simples Nacional" <%= @empresa[:regime_tributario] == 'Simples Nacional' ? 'selected' : '' %>>Simples Nacional</option>
+            <option value="Lucro Presumido" <%= @empresa[:regime_tributario] == 'Lucro Presumido' ? 'selected' : '' %>>Lucro Presumido</option>
+            <option value="Lucro Real" <%= @empresa[:regime_tributario] == 'Lucro Real' ? 'selected' : '' %>>Lucro Real</option>
+            <option value="MEI" <%= @empresa[:regime_tributario] == 'MEI' ? 'selected' : '' %>>MEI</option>
+          <% else %>
+            <option value="LLC" <%= @empresa[:regime_tributario] == 'LLC' ? 'selected' : '' %>>LLC</option>
+            <option value="Corporation" <%= @empresa[:regime_tributario] == 'Corporation' ? 'selected' : '' %>>Corporation</option>
+            <option value="S Corporation" <%= @empresa[:regime_tributario] == 'S Corporation' ? 'selected' : '' %>>S Corporation</option>
+            <option value="Sole Proprietorship" <%= @empresa[:regime_tributario] == 'Sole Proprietorship' ? 'selected' : '' %>>Sole Proprietorship</option>
+          <% end %>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">País</label>
+        <select name="pais" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+          <option value="BR" <%= @empresa[:pais] == 'BR' ? 'selected' : '' %>>🇧🇷 Brasil</option>
+          <option value="US" <%= @empresa[:pais] == 'US' ? 'selected' : '' %>>🇺🇸 Estados Unidos</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Estado</label>
+        <input type="text" name="estado" value="<%= @empresa[:estado] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Cidade</label>
+        <input type="text" name="cidade" value="<%= @empresa[:cidade] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Endereço</label>
+        <input type="text" name="endereco" value="<%= @empresa[:endereco] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+      </div>
+    </div>
+    <div class="flex justify-end gap-3 mt-4">
+      <button type="button" onclick="document.getElementById('form-editar-empresa').classList.add('hidden')" class="px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg text-sm">Cancelar</button>
+      <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Salvar Alterações</button>
+    </div>
+  </form>
+</div>
+
+<!-- Filtro de período -->
+<form method="GET" class="flex items-center gap-3 mb-6">
+  <select name="mes" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+    <% meses_select.each do |num, nome| %>
+      <option value="<%= num %>" <%= @mes == num ? 'selected' : '' %>><%= nome %></option>
+    <% end %>
+  </select>
+  <select name="ano" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+    <% anos_select.each do |a| %>
+      <option value="<%= a %>" <%= @ano == a ? 'selected' : '' %>><%= a %></option>
+    <% end %>
+  </select>
+  <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Filtrar</button>
+</form>
+
+<!-- KPIs -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+  <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+    <span class="text-xs font-semibold text-slate-500 uppercase">Receitas</span>
+    <p class="text-2xl font-bold text-emerald-600 mt-1"><%= fmt_moeda(@resumo[:total_receitas]) %></p>
+  </div>
+  <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+    <span class="text-xs font-semibold text-slate-500 uppercase">Despesas</span>
+    <p class="text-2xl font-bold text-red-600 mt-1"><%= fmt_moeda(@resumo[:total_despesas]) %></p>
+  </div>
+  <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+    <span class="text-xs font-semibold text-slate-500 uppercase">Resultado</span>
+    <p class="text-2xl font-bold <%= @resultado >= 0 ? 'text-blue-600' : 'text-orange-600' %> mt-1"><%= fmt_moeda(@resultado) %></p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Distribuição de Lucros -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-800">Distribuição de Lucros - <%= nome_mes(@mes) %>/<%= @ano %></h2>
+    </div>
+    <div class="p-5">
+      <% if @resultado > 0 %>
+        <div class="space-y-3">
+          <% @distribuicao.each do |d| %>
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+              <div>
+                <p class="font-medium text-slate-800"><%= d[:socio][:nome] %></p>
+                <p class="text-xs text-slate-500"><%= d[:socio][:tipo]&.capitalize %> · <%= fmt_percentual(d[:percentual]) %></p>
+              </div>
+              <p class="text-lg font-bold text-emerald-600"><%= fmt_moeda(d[:valor]) %></p>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="text-sm text-slate-400 text-center py-4">Sem lucro para distribuir neste período</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Sócios e Contas -->
+  <div class="space-y-6">
+    <!-- Sócios -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <h2 class="font-semibold text-slate-800">Sócios</h2>
+      </div>
+      <div class="p-5 space-y-3">
+        <% @socios.each do |s| %>
+          <form action="/socios/<%= s[:id] %>" method="POST" class="flex items-center gap-3 bg-slate-50 rounded-lg p-3">
+            <input type="hidden" name="_method" value="PUT">
+            <input type="text" name="nome" value="<%= s[:nome] %>" class="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+            <input type="text" name="percentual_participacao" value="<%= s[:percentual_participacao] %>" class="w-20 px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-center">
+            <span class="text-sm text-slate-500">%</span>
+            <button type="submit" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700">Salvar</button>
+          </form>
+        <% end %>
+
+        <form action="/empresas/<%= @empresa[:id] %>/socios" method="POST" class="flex items-center gap-3 border-t border-slate-200 pt-3">
+          <input type="text" name="nome" placeholder="Nome do novo sócio" required class="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+          <input type="text" name="percentual_participacao" placeholder="%" required class="w-20 px-3 py-1.5 border border-slate-300 rounded-lg text-sm text-center">
+          <button type="submit" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700">+ Adicionar</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Contas Bancárias -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <h2 class="font-semibold text-slate-800">Contas Bancárias</h2>
+      </div>
+      <div class="p-5 space-y-3">
+        <% @contas.each do |c| %>
+          <div class="bg-slate-50 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="font-medium text-slate-800">🏦 <%= c[:banco] %></p>
+                <p class="text-xs text-slate-400">Ag: <%= c[:agencia] || '-' %> · Conta: <%= c[:conta] || '-' %> · <%= c[:moeda] %> · <%= c[:apelido] %></p>
+              </div>
+            </div>
+            <form action="/contas/<%= c[:id] %>/saldo" method="POST" class="flex items-center gap-2 mt-2">
+              <input type="hidden" name="_method" value="PUT">
+              <label class="text-xs text-slate-500 whitespace-nowrap">Saldo Inicial:</label>
+              <input type="text" name="saldo_inicial" value="<%= fmt_valor_input(c[:saldo_inicial]) %>" class="w-36 px-2 py-1 border border-slate-300 rounded text-sm moeda-br">
+              <button type="submit" class="px-2 py-1 bg-emerald-600 text-white rounded text-xs font-medium hover:bg-emerald-700">Salvar</button>
+            </form>
+          </div>
+        <% end %>
+
+        <form action="/empresas/<%= @empresa[:id] %>/contas" method="POST" class="border-t border-slate-200 pt-3">
+          <p class="text-xs font-medium text-slate-600 mb-2">Nova Conta Bancária</p>
+          <div class="grid grid-cols-2 gap-3">
+            <select name="banco" required class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm">
+              <option value="">Banco...</option>
+              <% (FinSystem::Config::BANCOS_BR + FinSystem::Config::BANCOS_US).each do |b| %>
+                <option value="<%= b %>"><%= b %></option>
+              <% end %>
+            </select>
+            <input type="text" name="apelido" placeholder="Apelido" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+            <input type="text" name="agencia" placeholder="Agência" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+            <input type="text" name="conta" placeholder="Conta" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+            <select name="moeda" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm">
+              <option value="BRL">BRL (R$)</option>
+              <option value="USD">USD ($)</option>
+            </select>
+            <input type="text" name="saldo_inicial" placeholder="Saldo Inicial (0,00)" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm moeda-br">
+            <button type="submit" class="col-span-2 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700">+ Adicionar Conta</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

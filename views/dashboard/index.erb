@@ -1,0 +1,428 @@
+<!-- views/dashboard/index.erb - Dashboard principal -->
+
+<!-- Header -->
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Dashboard Financeiro</h1>
+    <p class="text-slate-500 text-sm mt-1">
+      <%= @empresa_selecionada ? @empresa_selecionada[:nome_fantasia] : 'Consolidado - Todas as Empresas' %>
+      &middot; <%= nome_mes(@mes) %>/<%= @ano %>
+    </p>
+  </div>
+
+  <!-- Filtros -->
+  <form method="GET" action="/" class="flex flex-wrap items-end gap-3">
+    <select name="empresa_id" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+      <option value="">Todas as Empresas</option>
+      <% @empresas.each do |emp| %>
+        <option value="<%= emp[:id] %>" <%= @empresa_id.to_s == emp[:id].to_s ? 'selected' : '' %>>
+          <%= emp[:nome_fantasia] %> (<%= emp[:pais] %>)
+        </option>
+      <% end %>
+    </select>
+    <select name="mes" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+      <% meses_select.each do |num, nome| %>
+        <option value="<%= num %>" <%= @mes == num ? 'selected' : '' %>><%= nome %></option>
+      <% end %>
+    </select>
+    <select name="ano" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+      <% anos_select.each do |a| %>
+        <option value="<%= a %>" <%= @ano == a ? 'selected' : '' %>><%= a %></option>
+      <% end %>
+    </select>
+    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+      Filtrar
+    </button>
+  </form>
+</div>
+
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+  <!-- Total Receitas -->
+  <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Receitas</span>
+      <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-emerald-600"><%= fmt_moeda(@resumo[:total_receitas]) %></p>
+  </div>
+
+  <!-- Total Despesas -->
+  <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Despesas</span>
+      <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
+        </svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-red-600"><%= fmt_moeda(@resumo[:total_despesas]) %></p>
+  </div>
+
+  <!-- Resultado -->
+  <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Resultado</span>
+      <div class="w-10 h-10 rounded-lg <%= @resultado >= 0 ? 'bg-blue-100' : 'bg-orange-100' %> flex items-center justify-center">
+        <svg class="w-5 h-5 <%= @resultado >= 0 ? 'text-blue-600' : 'text-orange-600' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+        </svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold <%= @resultado >= 0 ? 'text-blue-600' : 'text-orange-600' %>"><%= fmt_moeda(@resultado) %></p>
+  </div>
+
+  <!-- Lucro Antecipações -->
+  <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Lucro Antecipações</span>
+      <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+      </div>
+    </div>
+    <p class="text-2xl font-bold text-purple-600"><%= fmt_moeda(@resumo[:lucro_antecipacoes]) %></p>
+    <p class="text-xs text-slate-400 mt-1">Antecipado: <%= fmt_moeda(@resumo[:total_antecipacoes]) %></p>
+  </div>
+</div>
+
+<!-- Saldos Bancários - Cards Destaque -->
+<% unless @saldos.empty? %>
+<div class="mb-8">
+  <h2 class="font-semibold text-slate-800 mb-4">🏦 Saldos Bancários Atuais</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <% @saldos.each do |s| %>
+      <% saldo = (s[:saldo_inicial] || 0) + (s[:total_entradas] || 0) - (s[:total_saidas] || 0) %>
+      <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-lg <%= saldo >= 0 ? 'bg-emerald-100' : 'bg-red-100' %> flex items-center justify-center">
+            <svg class="w-5 h-5 <%= saldo >= 0 ? 'text-emerald-600' : 'text-red-600' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-slate-800 truncate"><%= s[:banco] %></p>
+            <p class="text-xs text-slate-400 truncate"><%= s[:empresa_nome] || 'Sem empresa' %> · <%= s[:apelido] %></p>
+          </div>
+        </div>
+        <p class="text-xl font-bold <%= saldo >= 0 ? 'text-emerald-600' : 'text-red-600' %>"><%= fmt_moeda(saldo, s[:moeda]) %></p>
+        <div class="flex items-center gap-3 mt-2 text-xs text-slate-400">
+          <span class="text-emerald-500">▲ <%= fmt_moeda(s[:total_entradas] || 0, s[:moeda]) %></span>
+          <span class="text-red-500">▼ <%= fmt_moeda(s[:total_saidas] || 0, s[:moeda]) %></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+<% end %>
+
+<!-- Row: Gráficos -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+  <!-- Gráfico de Evolução Mensal -->
+  <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-800">Evolução Mensal (Últimos 6 meses)</h2>
+    </div>
+    <div class="p-5">
+      <canvas id="chartEvolucao" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Gráfico Pizza Despesas por Categoria -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-800">Despesas por Categoria</h2>
+    </div>
+    <div class="p-5">
+      <canvas id="chartCategorias" height="220"></canvas>
+      <% if @categorias_despesa.empty? %>
+        <p class="text-sm text-slate-400 text-center py-4">Sem dados neste período</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Row: Saldos Bancários + Ações Rápidas -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <!-- Saldos Bancários -->
+  <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-800">Saldos por Conta Bancária</h2>
+    </div>
+    <div class="p-5">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-xs text-slate-500 uppercase tracking-wide">
+            <th class="pb-3">Banco</th>
+            <th class="pb-3 text-right">Entradas</th>
+            <th class="pb-3 text-right">Saídas</th>
+            <th class="pb-3 text-right">Saldo</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @saldos.each do |s| %>
+            <% saldo = (s[:saldo_inicial] || 0) + (s[:total_entradas] || 0) - (s[:total_saidas] || 0) %>
+            <tr class="hover:bg-slate-50">
+              <td class="py-3">
+                <div class="font-medium text-slate-800"><%= s[:banco] %></div>
+                <div class="text-xs text-slate-400"><%= s[:empresa_nome] || 'Sem empresa' %> · <%= s[:apelido] %> · <%= s[:moeda] || 'BRL' %></div>
+              </td>
+              <td class="py-3 text-right text-emerald-600 font-medium"><%= fmt_moeda(s[:total_entradas] || 0, s[:moeda]) %></td>
+              <td class="py-3 text-right text-red-600 font-medium"><%= fmt_moeda(s[:total_saidas] || 0, s[:moeda]) %></td>
+              <td class="py-3 text-right font-bold <%= saldo >= 0 ? 'text-slate-800' : 'text-red-600' %>"><%= fmt_moeda(saldo, s[:moeda]) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <% if @saldos.empty? %>
+        <p class="text-sm text-slate-400 text-center py-6">Nenhuma conta bancária encontrada</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Ações Rápidas -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-800">Ações Rápidas</h2>
+    </div>
+    <div class="p-5 space-y-3">
+      <a href="/movimentacoes/nova" class="flex items-center gap-3 p-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition group">
+        <div class="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-medium text-slate-800 text-sm">Nova Movimentação</p>
+          <p class="text-xs text-slate-500">Receita ou Despesa</p>
+        </div>
+      </a>
+
+      <a href="/movimentacoes?tipo=receita&mes=<%= @mes %>&ano=<%= @ano %>" class="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 transition">
+        <div class="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-medium text-slate-800 text-sm">Ver Recebimentos</p>
+          <p class="text-xs text-slate-500"><%= @resumo[:qtd_movimentacoes] %> movimentações no mês</p>
+        </div>
+      </a>
+
+      <a href="/relatorios/exportar_csv?mes=<%= @mes %>&ano=<%= @ano %>" class="flex items-center gap-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition">
+        <div class="w-10 h-10 rounded-lg bg-slate-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-medium text-slate-800 text-sm">Exportar CSV</p>
+          <p class="text-xs text-slate-500">Para conciliação bancária</p>
+        </div>
+      </a>
+
+      <a href="/pessoal" class="flex items-center gap-3 p-3 rounded-lg bg-violet-50 hover:bg-violet-100 transition">
+        <div class="w-10 h-10 rounded-lg bg-violet-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-medium text-slate-800 text-sm">Finanças Pessoais</p>
+          <p class="text-xs text-slate-500">Controle pessoal</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Lembretes de Pagamento -->
+<% if @lembretes && !@lembretes.empty? %>
+<div class="bg-white rounded-xl shadow-sm border border-orange-200 mb-8">
+  <div class="px-5 py-4 border-b border-orange-100 flex items-center justify-between bg-orange-50 rounded-t-xl">
+    <div class="flex items-center gap-2">
+      <span class="text-lg">🔔</span>
+      <h2 class="font-semibold text-orange-800">Lembretes de Pagamento</h2>
+      <span class="px-2 py-0.5 bg-orange-200 text-orange-800 text-xs font-bold rounded-full"><%= @lembretes.size %></span>
+    </div>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-xs text-slate-500 uppercase tracking-wide bg-slate-50">
+          <th class="px-5 py-3">Vencimento</th>
+          <th class="px-5 py-3">Tipo</th>
+          <th class="px-5 py-3">Descrição</th>
+          <th class="px-5 py-3">Empresa</th>
+          <th class="px-5 py-3 text-right">Valor</th>
+          <th class="px-5 py-3">Status</th>
+          <th class="px-5 py-3">Ação</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @lembretes.each do |l| %>
+          <% vencido = l[:data_proximo_vencimento] && l[:data_proximo_vencimento] < Date.today %>
+          <tr class="hover:bg-slate-50 <%= vencido ? 'bg-red-50' : '' %>">
+            <td class="px-5 py-3 whitespace-nowrap font-medium <%= vencido ? 'text-red-600' : 'text-slate-600' %>">
+              <%= fmt_data(l[:data_proximo_vencimento]) %>
+              <% if vencido %><span class="text-xs text-red-500 font-bold ml-1">VENCIDO</span><% end %>
+            </td>
+            <td class="px-5 py-3">
+              <% if l[:tipo_cobranca] == 'recorrente' %>
+                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">🔄 Recorrente</span>
+              <% else %>
+                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700">📊 <%= l[:parcela_atual] %>/<%= l[:total_parcelas] %></span>
+              <% end %>
+            </td>
+            <td class="px-5 py-3 font-medium text-slate-800"><%= truncar(l[:descricao], 40) %></td>
+            <td class="px-5 py-3 text-slate-600"><%= l[:empresa_nome] %></td>
+            <td class="px-5 py-3 text-right font-bold text-red-600"><%= fmt_moeda(l[:valor_bruto]) %></td>
+            <td class="px-5 py-3"><%= badge_status(l[:status]) %></td>
+            <td class="px-5 py-3">
+              <form action="/movimentacoes/<%= l[:id] %>/marcar_pago" method="POST" class="inline">
+                <button class="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700">✓ Pago</button>
+              </form>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% end %>
+
+<!-- Últimas Movimentações -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200">
+  <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+    <h2 class="font-semibold text-slate-800">Últimas Movimentações</h2>
+    <a href="/movimentacoes" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Ver todas &rarr;</a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-xs text-slate-500 uppercase tracking-wide bg-slate-50">
+          <th class="px-5 py-3">Data</th>
+          <th class="px-5 py-3">Tipo</th>
+          <th class="px-5 py-3">Descrição</th>
+          <th class="px-5 py-3">Empresa</th>
+          <th class="px-5 py-3">Banco</th>
+          <th class="px-5 py-3 text-right">Valor</th>
+          <th class="px-5 py-3">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @ultimas_movimentacoes.each do |m| %>
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-5 py-3 text-slate-600 whitespace-nowrap"><%= fmt_data(m[:data_movimentacao]) %></td>
+            <td class="px-5 py-3"><%= badge_tipo(m[:tipo]) %></td>
+            <td class="px-5 py-3">
+              <div class="font-medium text-slate-800"><%= truncar(m[:descricao], 40) %></div>
+              <div class="text-xs text-slate-400"><%= m[:categoria_nome] %></div>
+            </td>
+            <td class="px-5 py-3 text-slate-600"><%= m[:empresa_nome] %></td>
+            <td class="px-5 py-3 text-slate-600"><%= m[:banco_nome] %></td>
+            <td class="px-5 py-3 text-right font-bold <%= cor_valor(m[:tipo]) %> whitespace-nowrap">
+              <%= prefixo_valor(m[:tipo]) %> <%= fmt_moeda(m[:valor_bruto]) %>
+            </td>
+            <td class="px-5 py-3"><%= badge_status(m[:status]) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% if @ultimas_movimentacoes.empty? %>
+      <div class="text-center py-12">
+        <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+        </svg>
+        <p class="text-slate-400 text-sm">Nenhuma movimentação neste período</p>
+        <a href="/movimentacoes/nova" class="inline-block mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium">+ Lançar primeira movimentação</a>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Chart.js Scripts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Evolução Mensal - Gráfico de barras
+  const evolucaoCtx = document.getElementById('chartEvolucao');
+  if (evolucaoCtx) {
+    new Chart(evolucaoCtx, {
+      type: 'bar',
+      data: {
+        labels: [<%= @evolucao.map { |e| "'#{e[:mes]}'" }.join(',') %>],
+        datasets: [
+          {
+            label: 'Receitas',
+            data: [<%= @evolucao.map { |e| e[:receitas] }.join(',') %>],
+            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+            borderColor: 'rgb(16, 185, 129)',
+            borderWidth: 1, borderRadius: 4
+          },
+          {
+            label: 'Despesas',
+            data: [<%= @evolucao.map { |e| e[:despesas] }.join(',') %>],
+            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+            borderColor: 'rgb(239, 68, 68)',
+            borderWidth: 1, borderRadius: 4
+          },
+          {
+            label: 'Resultado',
+            data: [<%= @evolucao.map { |e| e[:resultado] }.join(',') %>],
+            type: 'line',
+            borderColor: 'rgb(99, 102, 241)',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            borderWidth: 2, pointRadius: 4, tension: 0.3, fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 15, font: { size: 11 } } } },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: v => {
+            <% if @empresa_selecionada && @empresa_selecionada[:pais] == 'US' %>
+              return '$ ' + v.toLocaleString('en-US');
+            <% else %>
+              return 'R$ ' + v.toLocaleString('pt-BR');
+            <% end %>
+          } } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Despesas por Categoria - Gráfico de pizza
+  const catCtx = document.getElementById('chartCategorias');
+  <% if !@categorias_despesa.empty? %>
+  if (catCtx) {
+    new Chart(catCtx, {
+      type: 'doughnut',
+      data: {
+        labels: [<%= @categorias_despesa.map { |c| "'#{c[:categoria] || 'Sem Categoria'}'" }.join(',') %>],
+        datasets: [{
+          data: [<%= @categorias_despesa.map { |c| c[:total].to_f }.join(',') %>],
+          backgroundColor: [<%= @categorias_despesa.map { |c| "'#{c[:cor] || '#6b7280'}'" }.join(',') %>],
+          borderWidth: 2, borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { usePointStyle: true, padding: 10, font: { size: 10 } } }
+        }
+      }
+    });
+  }
+  <% end %>
+});
+</script>

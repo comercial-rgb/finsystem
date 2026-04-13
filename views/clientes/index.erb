@@ -1,0 +1,103 @@
+<!-- views/clientes/index.erb - Listagem de clientes -->
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Clientes</h1>
+    <p class="text-slate-500 text-sm mt-1"><%= @total %> clientes cadastrados</p>
+  </div>
+  <a href="/clientes/novo" class="px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    Novo Cliente
+  </a>
+</div>
+
+<!-- Filtros -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
+  <form method="GET" action="/clientes" class="flex flex-wrap items-end gap-3">
+    <div class="flex-1 min-w-[200px]">
+      <label class="block text-xs font-medium text-slate-500 mb-1">Buscar</label>
+      <input type="text" name="busca" value="<%= @busca %>" placeholder="Nome ou documento..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-slate-500 mb-1">Empresa</label>
+      <select name="empresa_id" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+        <option value="">Todas</option>
+        <% @empresas.each do |emp| %>
+          <option value="<%= emp[:id] %>" <%= @empresa_id.to_s == emp[:id].to_s ? 'selected' : '' %>><%= emp[:nome_fantasia] %></option>
+        <% end %>
+      </select>
+    </div>
+    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">Filtrar</button>
+  </form>
+</div>
+
+<!-- Tabela -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-xs text-slate-500 uppercase tracking-wide bg-slate-50">
+          <th class="px-5 py-3">Nome</th>
+          <th class="px-5 py-3">Documento</th>
+          <th class="px-5 py-3">Tipo</th>
+          <th class="px-5 py-3">Empresa</th>
+          <th class="px-5 py-3">Email</th>
+          <th class="px-5 py-3">Telefone</th>
+          <th class="px-5 py-3">Cidade/UF</th>
+          <th class="px-5 py-3 text-center">Ações</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @clientes.each do |c| %>
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-5 py-3 font-medium text-slate-800"><%= c[:nome] %></td>
+            <td class="px-5 py-3 text-slate-600"><%= c[:cnpj_cpf_ein] || '-' %></td>
+            <td class="px-5 py-3">
+              <span class="px-2 py-1 text-xs rounded-full font-medium <%= c[:tipo] == 'PJ' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' %>">
+                <%= c[:tipo] %>
+              </span>
+            </td>
+            <td class="px-5 py-3 text-slate-600"><%= c[:empresa_nome] || '-' %></td>
+            <td class="px-5 py-3 text-slate-600"><%= c[:email] || '-' %></td>
+            <td class="px-5 py-3 text-slate-600"><%= c[:telefone] || '-' %></td>
+            <td class="px-5 py-3 text-slate-600"><%= [c[:cidade], c[:estado]].compact.reject(&:empty?).join('/') || '-' %></td>
+            <td class="px-5 py-3 text-center">
+              <div class="flex items-center justify-center gap-1">
+                <a href="/clientes/<%= c[:id] %>/editar" class="p-1.5 text-slate-400 hover:text-indigo-600 transition" title="Editar">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </a>
+                <form action="/clientes/<%= c[:id] %>" method="POST" onsubmit="return confirm('Desativar este cliente?')" class="inline">
+                  <input type="hidden" name="_method" value="DELETE">
+                  <button class="p-1.5 text-slate-400 hover:text-red-600 transition" title="Desativar">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <% if @clientes.empty? %>
+    <div class="text-center py-12">
+      <p class="text-slate-400 text-sm">Nenhum cliente encontrado</p>
+      <a href="/clientes/novo" class="inline-block mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium">+ Cadastrar primeiro cliente</a>
+    </div>
+  <% end %>
+
+  <!-- Paginação -->
+  <% if @total_pages > 1 %>
+    <div class="px-5 py-3 border-t border-slate-100 flex justify-between items-center bg-slate-50">
+      <span class="text-xs text-slate-500">Página <%= @page %> de <%= @total_pages %></span>
+      <div class="flex gap-1">
+        <% if @page > 1 %>
+          <a href="/clientes?page=<%= @page - 1 %>&empresa_id=<%= @empresa_id %>&busca=<%= @busca %>" class="px-3 py-1 text-xs bg-white border border-slate-300 rounded hover:bg-slate-50">&laquo; Anterior</a>
+        <% end %>
+        <% if @page < @total_pages %>
+          <a href="/clientes?page=<%= @page + 1 %>&empresa_id=<%= @empresa_id %>&busca=<%= @busca %>" class="px-3 py-1 text-xs bg-white border border-slate-300 rounded hover:bg-slate-50">Próxima &raquo;</a>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

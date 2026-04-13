@@ -1,0 +1,47 @@
+<!-- views/usuarios/auditoria.erb - Log de auditoria -->
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-800">Log de Auditoria</h1>
+  <p class="text-slate-500 text-sm mt-1">Registro de todas as ações no sistema</p>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left text-xs text-slate-500 uppercase tracking-wide bg-slate-50">
+          <th class="px-5 py-3">Data/Hora</th>
+          <th class="px-5 py-3">Usuário</th>
+          <th class="px-5 py-3">Ação</th>
+          <th class="px-5 py-3">Entidade</th>
+          <th class="px-5 py-3">Detalhes</th>
+          <th class="px-5 py-3">IP</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <% @logs.each do |log| %>
+          <tr class="hover:bg-slate-50">
+            <td class="px-5 py-3 text-slate-600 text-xs whitespace-nowrap"><%= fmt_datetime(log[:created_at]) %></td>
+            <td class="px-5 py-3 font-medium text-slate-800"><%= log[:usuario_nome] || 'Sistema' %></td>
+            <td class="px-5 py-3">
+              <% cores_acao = { 'login' => 'bg-blue-100 text-blue-700', 'logout' => 'bg-slate-100 text-slate-700',
+                                'create' => 'bg-emerald-100 text-emerald-700', 'update' => 'bg-yellow-100 text-yellow-700',
+                                'delete' => 'bg-red-100 text-red-700' } %>
+              <span class="px-2 py-1 text-xs font-medium rounded-full <%= cores_acao[log[:acao]] || 'bg-gray-100 text-gray-700' %>">
+                <%= log[:acao]&.upcase %>
+              </span>
+            </td>
+            <td class="px-5 py-3 text-slate-600"><%= log[:entidade] || '-' %></td>
+            <td class="px-5 py-3 text-slate-500 text-xs max-w-[300px] truncate"><%= log[:detalhes] || '-' %></td>
+            <td class="px-5 py-3 text-slate-400 text-xs"><%= log[:ip_address] || '-' %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% if @logs.empty? %>
+      <div class="text-center py-12">
+        <p class="text-slate-400 text-sm">Nenhum registro de auditoria</p>
+      </div>
+    <% end %>
+  </div>
+</div>

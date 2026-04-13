@@ -1,0 +1,385 @@
+<!-- views/movimentacoes/form.erb - Formulário nova movimentação -->
+
+<div class="max-w-4xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="/movimentacoes" class="p-2 text-slate-400 hover:text-slate-600 transition">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </a>
+    <h1 class="text-2xl font-bold text-slate-800">Nova Movimentação</h1>
+  </div>
+
+  <form action="/movimentacoes" method="POST" enctype="multipart/form-data" class="space-y-6">
+
+    <!-- Tipo de Operação -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="font-semibold text-slate-800 mb-4">Tipo de Operação</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <label class="cursor-pointer">
+          <input type="radio" name="tipo" value="receita" class="hidden peer" checked onchange="toggleTipo()">
+          <div class="p-4 rounded-xl border-2 border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 transition-all text-center">
+            <div class="text-2xl mb-1">💰</div>
+            <p class="font-semibold text-slate-800">Receita</p>
+            <p class="text-xs text-slate-500">Recebimento de cliente</p>
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="tipo" value="despesa" class="hidden peer" onchange="toggleTipo()">
+          <div class="p-4 rounded-xl border-2 border-slate-200 peer-checked:border-red-500 peer-checked:bg-red-50 transition-all text-center">
+            <div class="text-2xl mb-1">📤</div>
+            <p class="font-semibold text-slate-800">Despesa</p>
+            <p class="text-xs text-slate-500">Pagamento / Boleto</p>
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="is_antecipacao_radio" value="true" class="hidden peer" onchange="toggleAntecipacao()">
+          <div class="p-4 rounded-xl border-2 border-slate-200 peer-checked:border-purple-500 peer-checked:bg-purple-50 transition-all text-center">
+            <div class="text-2xl mb-1">⚡</div>
+            <p class="font-semibold text-slate-800">Antecipação</p>
+            <p class="text-xs text-slate-500">Antecipar para fornecedor</p>
+          </div>
+        </label>
+      </div>
+      <input type="hidden" name="is_antecipacao" id="is_antecipacao" value="false">
+    </div>
+
+    <!-- Dados Principais -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="font-semibold text-slate-800 mb-4">Dados da Movimentação</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Empresa *</label>
+          <select name="empresa_id" required class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+            <% @empresas.each do |emp| %>
+              <option value="<%= emp[:id] %>"><%= emp[:nome_fantasia] %> (<%= emp[:pais] %>)</option>
+            <% end %>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Conta Bancária *</label>
+          <select name="conta_bancaria_id" required class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+            <% @contas.each do |c| %>
+              <option value="<%= c[:id] %>"><%= c[:banco] %> (<%= c[:apelido] %>) - <%= c[:empresa_nome] %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Data *</label>
+          <input type="date" name="data_movimentacao" value="<%= hoje %>" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Forma de Pagamento</label>
+          <select name="forma_pagamento" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="pix">PIX</option>
+            <option value="ted">TED</option>
+            <option value="boleto">Boleto</option>
+            <option value="cartao_credito">Cartão de Crédito</option>
+            <option value="cartao_debito">Cartão de Débito</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="wire_transfer">Wire Transfer (US)</option>
+            <option value="ach">ACH (US)</option>
+          </select>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Descrição *</label>
+          <input type="text" name="descricao" required placeholder="Ex: Nivagner Junior - Jurídico Trabalhista / Aluguel Escritório Jan/2026"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+          <p class="text-xs text-slate-400 mt-1">Inclua o nome da pessoa/empresa + detalhe do serviço</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Valores -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="font-semibold text-slate-800 mb-4">Valores</h2>
+
+      <!-- Campos normais -->
+      <div id="campos-normais" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Valor <span id="label-valor">(Bruto)</span> *</label>
+          <input type="text" name="valor_bruto" required placeholder="0,00"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm moeda-br" onkeyup="calcularLucro()">
+        </div>
+        <div id="campo-valor-liquido">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Valor Líquido</label>
+          <input type="text" name="valor_liquido" placeholder="0,00"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm moeda-br" onkeyup="calcularLucro()">
+        </div>
+        <div id="campo-lucro-container">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Lucro da Operação</label>
+          <input type="text" name="lucro" id="campo-lucro" placeholder="0,00"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-emerald-50 moeda-br">
+        </div>
+      </div>
+
+      <!-- Campos de antecipação -->
+      <div id="campos-antecipacao" class="hidden space-y-4">
+        <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+          <p class="text-sm text-purple-800 font-medium mb-3">
+            💡 Antecipação: Informe o valor original do faturamento e o valor que será enviado ao fornecedor. A diferença será registrada como lucro.
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-purple-800 mb-1">Valor Original (Faturamento)</label>
+              <input type="text" name="valor_original_faturamento" placeholder="26.000,00" id="ant-original"
+                     class="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm moeda-br" onkeyup="calcularAntecipacao()">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-purple-800 mb-1">Valor Antecipado (Enviado)</label>
+              <input type="text" name="valor_antecipado" placeholder="23.000,00" id="ant-enviado"
+                     class="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm moeda-br" onkeyup="calcularAntecipacao()">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-purple-800 mb-1">Taxa/Lucro (Automático)</label>
+              <input type="text" name="taxa_antecipacao" id="ant-taxa" readonly
+                     class="w-full px-3 py-2 border border-purple-300 rounded-lg text-sm bg-purple-100 font-bold text-purple-700 moeda-br">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tipo de Cobrança (Única / Recorrente / Parcelada) -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="font-semibold text-slate-800 mb-4">Tipo de Cobrança</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <label class="cursor-pointer">
+          <input type="radio" name="tipo_cobranca" value="unica" class="hidden peer" checked onchange="toggleCobranca()">
+          <div class="p-4 rounded-xl border-2 border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all text-center">
+            <div class="text-2xl mb-1">1️⃣</div>
+            <p class="font-semibold text-slate-800 text-sm">Cobrança Única</p>
+            <p class="text-xs text-slate-500">Pagamento avulso</p>
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="tipo_cobranca" value="recorrente" class="hidden peer" onchange="toggleCobranca()">
+          <div class="p-4 rounded-xl border-2 border-slate-200 peer-checked:border-amber-500 peer-checked:bg-amber-50 transition-all text-center">
+            <div class="text-2xl mb-1">🔄</div>
+            <p class="font-semibold text-slate-800 text-sm">Recorrente</p>
+            <p class="text-xs text-slate-500">Repete todo mês</p>
+          </div>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="tipo_cobranca" value="parcelada" class="hidden peer" onchange="toggleCobranca()">
+          <div class="p-4 rounded-xl border-2 border-slate-200 peer-checked:border-purple-500 peer-checked:bg-purple-50 transition-all text-center">
+            <div class="text-2xl mb-1">📊</div>
+            <p class="font-semibold text-slate-800 text-sm">Parcelada</p>
+            <p class="text-xs text-slate-500">Dividida em parcelas</p>
+          </div>
+        </label>
+      </div>
+
+      <!-- Campos extras para Recorrente -->
+      <div id="campos-recorrente" class="hidden bg-amber-50 rounded-lg p-4 border border-amber-200">
+        <p class="text-sm text-amber-800 font-medium mb-3">🔄 Esta despesa será lembrada automaticamente todos os meses</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-amber-800 mb-1">Dia do vencimento mensal *</label>
+            <input type="number" name="dia_vencimento_recorrente" min="1" max="31" value="10" class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm">
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos extras para Parcelada -->
+      <div id="campos-parcelada" class="hidden bg-purple-50 rounded-lg p-4 border border-purple-200">
+        <p class="text-sm text-purple-800 font-medium mb-3">📊 O valor total será dividido igualmente entre as parcelas</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-purple-800 mb-1">Número de Parcelas *</label>
+            <select name="total_parcelas" class="w-full px-3 py-2 bg-white border border-purple-300 rounded-lg text-sm">
+              <% (2..48).each do |n| %>
+                <option value="<%= n %>"><%= n %>x</option>
+              <% end %>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categoria e Vínculo -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="font-semibold text-slate-800 mb-4">Categoria e Vínculo</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div id="cat-receita">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
+          <select name="categoria_id" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="">-- Selecione --</option>
+            <optgroup label="📈 Receitas" id="opt-receitas">
+              <% @categorias_receita.each do |c| %>
+                <option value="<%= c[:id] %>"><%= c[:nome] %></option>
+              <% end %>
+            </optgroup>
+            <optgroup label="📉 Despesas" id="opt-despesas">
+              <% @categorias_despesa.each do |c| %>
+                <option value="<%= c[:id] %>"><%= c[:nome] %></option>
+              <% end %>
+            </optgroup>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Tipo de Operação</label>
+          <select name="tipo_operacao" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="">-- Selecione --</option>
+            <optgroup label="💰 Receitas">
+              <option value="faturamento">Faturamento de Cliente</option>
+              <option value="comissao">Comissão / Taxa de Serviço</option>
+            </optgroup>
+            <optgroup label="📤 Repasses e Fornecedores">
+              <option value="repasse">Repasse a Fornecedor</option>
+              <option value="antecipacao">Antecipação a Fornecedor</option>
+            </optgroup>
+            <optgroup label="🏢 Despesas Operacionais">
+              <option value="aluguel">Aluguel</option>
+              <option value="utilidade">Utilidades (Água/Luz/Internet/Tel)</option>
+              <option value="servidor">Servidores / Hosting / Cloud</option>
+              <option value="software">Software / Licenças / SaaS</option>
+              <option value="ia">Inteligência Artificial (APIs)</option>
+              <option value="material">Material / Suprimentos</option>
+              <option value="marketing">Marketing / Publicidade</option>
+              <option value="viagem">Viagem / Deslocamento</option>
+            </optgroup>
+            <optgroup label="👥 Pessoal e Profissional">
+              <option value="salario">Salário / Folha de Pagamento</option>
+              <option value="prolabore">Pró-labore</option>
+              <option value="juridico">Jurídico / Advocacia</option>
+              <option value="contabilidade">Contabilidade</option>
+              <option value="consultoria">Consultoria</option>
+            </optgroup>
+            <optgroup label="🏛️ Governo e Financeiro">
+              <option value="imposto">Imposto / Taxa Gov.</option>
+              <option value="boleto">Boleto - Geral</option>
+              <option value="taxa_bancaria">Taxa Bancária</option>
+              <option value="seguro">Seguro</option>
+            </optgroup>
+            <optgroup label="📋 Outros">
+              <option value="outros">Outros</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div id="campo-cliente">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Cliente</label>
+          <select name="cliente_id" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="">-- Nenhum --</option>
+            <% @clientes.each do |c| %>
+              <option value="<%= c[:id] %>"><%= c[:nome] %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <div id="campo-fornecedor">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Fornecedor</label>
+          <select name="fornecedor_id" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="">-- Nenhum --</option>
+            <% @fornecedores.each do |f| %>
+              <option value="<%= f[:id] %>"><%= f[:nome] %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Nº Documento / Boleto / NF</label>
+          <input type="text" name="numero_documento" placeholder="Ex: NF-1234"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+          <select name="status" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="confirmado">Confirmado</option>
+            <option value="pendente">Pendente</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-slate-700 mb-1">Observações</label>
+        <textarea name="observacoes" rows="3" placeholder="Detalhes adicionais..."
+                  class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
+      </div>
+    </div>
+
+    <!-- Comprovante -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="font-semibold text-slate-800 mb-4">Comprovante (Opcional)</h2>
+      <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-indigo-400 transition">
+        <svg class="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <input type="file" name="comprovante" accept=".pdf,.jpg,.jpeg,.png,.webp"
+               class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+        <p class="text-xs text-slate-400 mt-2">PDF, JPG, PNG até 10MB</p>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="flex justify-end gap-3">
+      <a href="/movimentacoes" class="px-6 py-2.5 text-slate-600 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition">
+        Cancelar
+      </a>
+      <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+        Salvar Movimentação
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+function toggleTipo() {
+  document.getElementById('is_antecipacao').value = 'false';
+  document.getElementById('campos-antecipacao').classList.add('hidden');
+  document.getElementById('campos-normais').classList.remove('hidden');
+
+  // Verifica se é despesa para esconder campos de receita
+  const tipoSelecionado = document.querySelector('input[name="tipo"]:checked');
+  if (tipoSelecionado && tipoSelecionado.value === 'despesa') {
+    document.getElementById('campo-valor-liquido').classList.add('hidden');
+    document.getElementById('campo-lucro-container').classList.add('hidden');
+    document.getElementById('label-valor').textContent = '';
+  } else {
+    document.getElementById('campo-valor-liquido').classList.remove('hidden');
+    document.getElementById('campo-lucro-container').classList.remove('hidden');
+    document.getElementById('label-valor').textContent = '(Bruto)';
+  }
+}
+
+function toggleAntecipacao() {
+  document.getElementById('is_antecipacao').value = 'true';
+  document.getElementById('campos-antecipacao').classList.remove('hidden');
+  document.getElementById('campos-normais').classList.add('hidden');
+  document.querySelectorAll('input[name="tipo"]').forEach(r => r.checked = false);
+}
+
+function toggleCobranca() {
+  const tipo = document.querySelector('input[name="tipo_cobranca"]:checked')?.value;
+  document.getElementById('campos-recorrente').classList.toggle('hidden', tipo !== 'recorrente');
+  document.getElementById('campos-parcelada').classList.toggle('hidden', tipo !== 'parcelada');
+}
+
+function calcularAntecipacao() {
+  const original = parseMoedaBR(document.getElementById('ant-original').value);
+  const enviado = parseMoedaBR(document.getElementById('ant-enviado').value);
+  const taxa = original - enviado;
+  document.getElementById('ant-taxa').value = taxa.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+}
+
+function calcularLucro() {
+  const bruto = parseMoedaBR(document.querySelector('[name="valor_bruto"]').value);
+  const liquido = parseMoedaBR(document.querySelector('[name="valor_liquido"]').value);
+  if (liquido > 0 && bruto > 0) {
+    document.getElementById('campo-lucro').value = (bruto - liquido).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+  }
+}
+
+// Executar ao carregar para aplicar o estado inicial
+document.addEventListener('DOMContentLoaded', function() {
+  toggleTipo();
+});
+</script>
