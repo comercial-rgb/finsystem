@@ -210,6 +210,11 @@ module FinSystem
         end
       end
 
+      # Corrigir transferências antigas: mudar status de 'confirmado' para 'transferencia'
+      db[:movimentacoes]
+        .where(tipo_operacao: 'transferencia', status: 'confirmado')
+        .update(status: 'transferencia')
+
       # ========================================
       # COMPROVANTES / ANEXOS
       # ========================================

@@ -251,7 +251,7 @@ module FinSystem
           Sequel[:movimentacoes][:empresa_id] => empresa_id.to_i,
           Sequel[:movimentacoes][:data_movimentacao] => inicio..fim,
           Sequel[:movimentacoes][:status] => %w[confirmado conciliado pendente]
-        )
+        ).exclude(Sequel[:movimentacoes][:tipo_operacao] => 'transferencia')
 
         {
           total_receitas: base.where(tipo: 'receita').sum(:valor_bruto) || 0,

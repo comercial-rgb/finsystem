@@ -38,7 +38,7 @@ module FinSystem
         all_movimentacoes = Models::Movimentacao.listar(filtros)
 
         # Totais dos filtros atuais (exclui cancelados e transferências do cálculo de saldo)
-        ativas = all_movimentacoes.reject { |m| %w[cancelado transferencia].include?(m[:status]) }
+        ativas = all_movimentacoes.reject { |m| %w[cancelado transferencia].include?(m[:status]) || m[:tipo_operacao] == 'transferencia' }
         @total_receitas = ativas.select { |m| m[:tipo] == 'receita' }.sum { |m| m[:valor_bruto] || 0 }
         @total_despesas = ativas.select { |m| m[:tipo] == 'despesa' }.sum { |m| m[:valor_bruto] || 0 }
         @saldo_periodo = @total_receitas - @total_despesas
