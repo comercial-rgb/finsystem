@@ -18,6 +18,7 @@ module FinSystem
         def autenticar_requisicao
           return if ROTAS_PUBLICAS.any? { |r| request.path_info == r }
           return if request.path_info.start_with?('/public/')
+          return if request.path_info.start_with?('/api/')
           return if request.path_info.start_with?('/redefinir-senha/')
           # Permitir acesso a arquivos estáticos (CSS, JS, imagens, uploads)
           return if request.path_info =~ /\.(css|js|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot|map)$/i
