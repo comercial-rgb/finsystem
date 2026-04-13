@@ -75,6 +75,16 @@ module FinSystem
           end
 
           # Montar params para o model
+          # Converter valores numéricos (float/int) para formato BR que o model espera
+          # O model faz gsub('.','').gsub(',','.') então precisamos enviar "39327,76" e não "39327.76"
+          def formatar_valor_para_model(val)
+            return nil if val.nil?
+            # Se já tem vírgula (formato BR), retorna como está
+            return val.to_s if val.to_s.include?(',')
+            # Converte float/int para formato BR: 39327.76 -> "39327,76"
+            format('%.2f', val.to_f).gsub('.', ',')
+          end
+
           params_mov = {
             empresa_id: dados[:empresa_id].to_s,
             conta_bancaria_id: dados[:conta_bancaria_id].to_s,
@@ -82,15 +92,15 @@ module FinSystem
             tipo: dados[:tipo],
             data_movimentacao: dados[:data_movimentacao].to_s,
             descricao: dados[:descricao].to_s,
-            valor_bruto: dados[:valor_bruto].to_s,
-            valor_liquido: dados[:valor_liquido]&.to_s,
-            lucro: dados[:lucro]&.to_s,
+            valor_bruto: formatar_valor_para_model(dados[:valor_bruto]),
+            valor_liquido: formatar_valor_para_model(dados[:valor_liquido]),
+            lucro: formatar_valor_para_model(dados[:lucro]),
             categoria_id: dados[:categoria_id]&.to_s,
             cliente_id: dados[:cliente_id]&.to_s,
             fornecedor_id: dados[:fornecedor_id]&.to_s,
             tipo_operacao: dados[:tipo_operacao] || 'repasse',
             numero_documento: dados[:numero_documento]&.to_s,
-            status: dados[:status] || 'pendente',
+            status: dados[:status] || 'confirmado',
             forma_pagamento: dados[:forma_pagamento],
             observacoes: dados[:observacoes],
             tipo_cobranca: dados[:tipo_cobranca] || 'unica',

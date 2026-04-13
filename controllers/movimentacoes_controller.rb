@@ -330,6 +330,52 @@ module FinSystem
         session[:flash_message] = "Fornecedor #{params[:nome]} cadastrado!"
         redirect back
       end
+
+      # ========================================
+      # CONSULTA CNPJ VIA BRASILAPI
+      # ========================================
+      get '/api/consultar_cnpj/:cnpj' do
+        content_type :json
+        cnpj = params[:cnpj]&.gsub(/\D/, '')
+        halt 422, { success: false, message: 'CNPJ inválido' }.to_json unless cnpj&.length == 14
+
+        require 'net/http'
+        require 'uri'
+        begin
+          uri = URI("https://brasilapi.com.br/api/cnpj/v1/#{cnpj}")
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = true
+          http.open_timeout = 5
+          http.read_timeout = 10
+          response = http.get(uri.request_uri)
+
+          if response.code == '200'
+            dados = JSON.parse(response.body)
+            {
+              success: true,
+              data: {
+                razao_social: dados['razao_social'],
+                nome_fantasia: dados['nome_fantasia'],
+                cnpj: dados['cnpj'],
+                logradouro: [dados['logradouro'], dados['numero'], dados['complemento']].compact.reject(&:empty?).join(', '),
+                bairro: dados['bairro'],
+                municipio: dados['municipio'],
+                uf: dados['uf'],
+                cep: dados['cep'],
+                telefone: dados['ddd_telefone_1'],
+                email: dados['email'],
+                situacao_cadastral: dados['descricao_situacao_cadastral']
+              }
+            }.to_json
+          else
+            { success: false, message: 'CNPJ não encontrado na Receita Federal' }.to_json
+          end
+        rescue Net::OpenTimeout, Net::ReadTimeout
+          { success: false, message: 'Timeout ao consultar BrasilAPI' }.to_json
+        rescue => e
+          { success: false, message: "Erro na consulta: #{e.message}" }.to_json
+        end
+      end
     end
   end
 end

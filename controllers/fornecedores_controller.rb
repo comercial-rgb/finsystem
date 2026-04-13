@@ -60,10 +60,13 @@ module FinSystem
           empresa_id: params[:empresa_id]&.to_i,
           nome: params[:nome].strip,
           cnpj_cpf_ein: params[:cnpj_cpf_ein]&.strip,
+          razao_social: params[:razao_social]&.strip,
+          nome_fantasia: params[:nome_fantasia]&.strip,
           tipo: params[:tipo_fornecedor] || 'rede_credenciada',
           categoria: params[:categoria]&.strip,
           email: params[:email]&.strip,
           telefone: params[:telefone]&.strip,
+          endereco: params[:endereco]&.strip,
           cidade: params[:cidade]&.strip,
           estado: params[:estado]&.strip,
           pais: params[:pais] || 'BR',
@@ -111,10 +114,13 @@ module FinSystem
           empresa_id: params[:empresa_id]&.to_i,
           nome: params[:nome].strip,
           cnpj_cpf_ein: params[:cnpj_cpf_ein]&.strip,
+          razao_social: params[:razao_social]&.strip,
+          nome_fantasia: params[:nome_fantasia]&.strip,
           tipo: params[:tipo_fornecedor] || 'rede_credenciada',
           categoria: params[:categoria]&.strip,
           email: params[:email]&.strip,
           telefone: params[:telefone]&.strip,
+          endereco: params[:endereco]&.strip,
           cidade: params[:cidade]&.strip,
           estado: params[:estado]&.strip,
           pais: params[:pais] || 'BR',
@@ -154,6 +160,67 @@ module FinSystem
 
         session[:flash_message] = 'Fornecedor desativado!'
         redirect '/fornecedores'
+      end
+
+      # ========================================
+      # API JSON - Busca por CNPJ/CPF
+      # ========================================
+      get '/api/fornecedores/buscar_documento' do
+        content_type :json
+        doc = params[:documento]&.gsub(/\D/, '')
+        return { success: false, message: 'Documento não informado' }.to_json if doc.nil? || doc.empty?
+
+        fornecedor = FinSystem::Database.db[:fornecedores].where(ativo: true).where(
+          Sequel.lit("REPLACE(REPLACE(REPLACE(REPLACE(cnpj_cpf_ein, '.', ''), '-', ''), '/', ''), ' ', '') = ?", doc)
+        ).first
+
+        if fornecedor
+          { success: true, encontrado: true, data: {
+            id: fornecedor[:id], nome: fornecedor[:nome],
+            razao_social: fornecedor[:razao_social], nome_fantasia: fornecedor[:nome_fantasia],
+            cnpj_cpf_ein: fornecedor[:cnpj_cpf_ein], email: fornecedor[:email],
+            telefone: fornecedor[:telefone], endereco: fornecedor[:endereco],
+            cidade: fornecedor[:cidade], estado: fornecedor[:estado]
+          }}.to_json
+        else
+          { success: true, encontrado: false }.to_json
+        end
+      end
+
+      # Criar fornecedor inline via JSON
+      post '/api/fornecedores/criar_rapido' do
+        content_type :json
+        begin
+          dados = JSON.parse(request.body.read, symbolize_names: true)
+
+          doc_limpo = dados[:cnpj_cpf_ein]&.gsub(/\D/, '')
+          existente = FinSystem::Database.db[:fornecedores].where(ativo: true).where(
+            Sequel.lit("REPLACE(REPLACE(REPLACE(REPLACE(cnpj_cpf_ein, '.', ''), '-', ''), '/', ''), ' ', '') = ?", doc_limpo)
+          ).first
+
+          if existente
+            return { success: true, data: { id: existente[:id], nome: existente[:nome] } }.to_json
+          end
+
+          nome = dados[:razao_social] || dados[:nome_fantasia] || dados[:nome] || ''
+          id = FinSystem::Database.db[:fornecedores].insert(
+            nome: nome.strip,
+            razao_social: dados[:razao_social]&.strip,
+            nome_fantasia: dados[:nome_fantasia]&.strip,
+            cnpj_cpf_ein: dados[:cnpj_cpf_ein]&.strip,
+            tipo: 'rede_credenciada',
+            email: dados[:email]&.strip,
+            telefone: dados[:telefone]&.strip,
+            endereco: dados[:endereco]&.strip,
+            cidade: dados[:cidade]&.strip,
+            estado: dados[:estado]&.strip,
+            pais: 'BR'
+          )
+          { success: true, data: { id: id, nome: nome.strip } }.to_json
+        rescue => e
+          status 422
+          { success: false, message: e.message }.to_json
+        end
       end
     end
   end

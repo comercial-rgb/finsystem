@@ -60,9 +60,12 @@ module FinSystem
           empresa_id: params[:empresa_id]&.to_i,
           nome: params[:nome].strip,
           cnpj_cpf_ein: params[:cnpj_cpf_ein]&.strip,
+          razao_social: params[:razao_social]&.strip,
+          nome_fantasia: params[:nome_fantasia]&.strip,
           tipo: params[:tipo] || 'PJ',
           email: params[:email]&.strip,
           telefone: params[:telefone]&.strip,
+          endereco: params[:endereco]&.strip,
           cidade: params[:cidade]&.strip,
           estado: params[:estado]&.strip,
           pais: params[:pais] || 'BR'
@@ -104,9 +107,12 @@ module FinSystem
           empresa_id: params[:empresa_id]&.to_i,
           nome: params[:nome].strip,
           cnpj_cpf_ein: params[:cnpj_cpf_ein]&.strip,
+          razao_social: params[:razao_social]&.strip,
+          nome_fantasia: params[:nome_fantasia]&.strip,
           tipo: params[:tipo] || 'PJ',
           email: params[:email]&.strip,
           telefone: params[:telefone]&.strip,
+          endereco: params[:endereco]&.strip,
           cidade: params[:cidade]&.strip,
           estado: params[:estado]&.strip,
           pais: params[:pais] || 'BR'
@@ -140,6 +146,68 @@ module FinSystem
 
         session[:flash_message] = 'Cliente desativado!'
         redirect '/clientes'
+      end
+
+      # ========================================
+      # API JSON - Busca por CNPJ/CPF
+      # ========================================
+      get '/api/clientes/buscar_documento' do
+        content_type :json
+        doc = params[:documento]&.gsub(/\D/, '')
+        return { success: false, message: 'Documento não informado' }.to_json if doc.nil? || doc.empty?
+
+        cliente = FinSystem::Database.db[:clientes].where(ativo: true).where(
+          Sequel.lit("REPLACE(REPLACE(REPLACE(REPLACE(cnpj_cpf_ein, '.', ''), '-', ''), '/', ''), ' ', '') = ?", doc)
+        ).first
+
+        if cliente
+          { success: true, encontrado: true, data: {
+            id: cliente[:id], nome: cliente[:nome],
+            razao_social: cliente[:razao_social], nome_fantasia: cliente[:nome_fantasia],
+            cnpj_cpf_ein: cliente[:cnpj_cpf_ein], email: cliente[:email],
+            telefone: cliente[:telefone], endereco: cliente[:endereco],
+            cidade: cliente[:cidade], estado: cliente[:estado]
+          }}.to_json
+        else
+          { success: true, encontrado: false }.to_json
+        end
+      end
+
+      # Criar cliente inline via JSON (da tela de movimentação)
+      post '/api/clientes/criar_rapido' do
+        content_type :json
+        begin
+          dados = JSON.parse(request.body.read, symbolize_names: true)
+          
+          # Verificar se já existe
+          doc_limpo = dados[:cnpj_cpf_ein]&.gsub(/\D/, '')
+          existente = FinSystem::Database.db[:clientes].where(ativo: true).where(
+            Sequel.lit("REPLACE(REPLACE(REPLACE(REPLACE(cnpj_cpf_ein, '.', ''), '-', ''), '/', ''), ' ', '') = ?", doc_limpo)
+          ).first
+          
+          if existente
+            return { success: true, data: { id: existente[:id], nome: existente[:nome] } }.to_json
+          end
+
+          nome = dados[:razao_social] || dados[:nome_fantasia] || dados[:nome] || ''
+          id = FinSystem::Database.db[:clientes].insert(
+            nome: nome.strip,
+            razao_social: dados[:razao_social]&.strip,
+            nome_fantasia: dados[:nome_fantasia]&.strip,
+            cnpj_cpf_ein: dados[:cnpj_cpf_ein]&.strip,
+            tipo: doc_limpo.to_s.length > 11 ? 'PJ' : 'PF',
+            email: dados[:email]&.strip,
+            telefone: dados[:telefone]&.strip,
+            endereco: dados[:endereco]&.strip,
+            cidade: dados[:cidade]&.strip,
+            estado: dados[:estado]&.strip,
+            pais: 'BR'
+          )
+          { success: true, data: { id: id, nome: nome.strip } }.to_json
+        rescue => e
+          status 422
+          { success: false, message: e.message }.to_json
+        end
       end
     end
   end

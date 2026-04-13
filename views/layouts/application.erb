@@ -22,7 +22,7 @@
       <!-- Logo InstaSolutions -->
       <div class="p-5 border-b border-slate-700/50">
         <a href="/" class="flex items-center gap-3">
-          <img src="/images/logo-simbolo.png" alt="InstaSolutions" class="w-10 h-10 flex-shrink-0 object-contain" onerror="this.style.display='none'">
+          <img src="/images/logo-simbolo-branco.png" alt="InstaSolutions" class="w-10 h-10 flex-shrink-0 object-contain">
           <div class="sidebar-label">
             <h1 class="font-bold text-lg leading-tight">FinSystem</h1>
             <p class="text-xs text-slate-400">InstaSolutions</p>
@@ -141,18 +141,18 @@
     <main class="flex-1 ml-[260px] min-h-screen">
       <!-- Flash Messages -->
       <% if flash_message %>
-        <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 p-4 fade-in" id="flash-success">
+        <div class="mx-6 mt-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r-lg fade-in" id="flash-success">
           <div class="flex items-center justify-between">
             <p class="text-sm font-medium"><%= flash_message %></p>
-            <button onclick="this.parentElement.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700">&times;</button>
+            <button onclick="this.parentElement.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 ml-4 text-lg font-bold">&times;</button>
           </div>
         </div>
       <% end %>
       <% if flash_error %>
-        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 fade-in" id="flash-error">
+        <div class="mx-6 mt-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg fade-in" id="flash-error">
           <div class="flex items-center justify-between">
             <p class="text-sm font-medium"><%= flash_error %></p>
-            <button onclick="this.parentElement.parentElement.remove()" class="text-red-500 hover:text-red-700">&times;</button>
+            <button onclick="this.parentElement.parentElement.remove()" class="text-red-500 hover:text-red-700 ml-4 text-lg font-bold">&times;</button>
           </div>
         </div>
       <% end %>

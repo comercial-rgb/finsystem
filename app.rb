@@ -104,6 +104,9 @@ module FinSystem
     # Capturar erros de todos os controllers (middleware global)
     use ErrorCatcher
 
+    # Permitir PUT/DELETE via _method em formulários (precisa estar antes dos controllers)
+    use Rack::MethodOverride
+
     configure :development do
       set :show_exceptions, true
       set :logging, true

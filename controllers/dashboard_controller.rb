@@ -69,7 +69,7 @@ module FinSystem
           d = hoje << i
           inicio = Date.new(d.year, d.month, 1)
           fim = (inicio >> 1) - 1
-          base = db[:movimentacoes].where(data_movimentacao: inicio..fim, status: 'confirmado')
+          base = db[:movimentacoes].where(data_movimentacao: inicio..fim, status: %w[confirmado conciliado pendente])
           base = base.where(empresa_id: empresa_id.to_i) if empresa_id && !empresa_id.to_s.empty?
           rec = (base.where(tipo: 'receita').sum(:valor_bruto) || 0).to_f
           desp = (base.where(tipo: 'despesa').sum(:valor_bruto) || 0).to_f
@@ -84,7 +84,7 @@ module FinSystem
         fim = (inicio >> 1) - 1
         query = db[:movimentacoes]
                   .left_join(:categorias, Sequel[:categorias][:id] => Sequel[:movimentacoes][:categoria_id])
-                  .where(Sequel[:movimentacoes][:data_movimentacao] => inicio..fim, Sequel[:movimentacoes][:tipo] => tipo, Sequel[:movimentacoes][:status] => 'confirmado')
+                  .where(Sequel[:movimentacoes][:data_movimentacao] => inicio..fim, Sequel[:movimentacoes][:tipo] => tipo, Sequel[:movimentacoes][:status] => %w[confirmado conciliado pendente])
         query = query.where(Sequel[:movimentacoes][:empresa_id] => empresa_id.to_i) if empresa_id && !empresa_id.to_s.empty?
         query.group(Sequel[:categorias][:nome], Sequel[:categorias][:cor])
              .select(Sequel[:categorias][:nome].as(:categoria), Sequel[:categorias][:cor].as(:cor), Sequel.function(:sum, Sequel[:movimentacoes][:valor_bruto]).as(:total))

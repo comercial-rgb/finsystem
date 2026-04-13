@@ -246,7 +246,7 @@ module FinSystem
         base = table.where(
           Sequel[:movimentacoes][:empresa_id] => empresa_id.to_i,
           Sequel[:movimentacoes][:data_movimentacao] => inicio..fim,
-          Sequel[:movimentacoes][:status] => 'confirmado'
+          Sequel[:movimentacoes][:status] => %w[confirmado conciliado pendente]
         )
 
         {
@@ -339,6 +339,7 @@ module FinSystem
       def self.conciliar(id, referencia)
         table.where(id: id).update(
           conciliado: true,
+          status: 'conciliado',
           data_conciliacao: Date.today,
           referencia_banco: referencia,
           updated_at: Time.now

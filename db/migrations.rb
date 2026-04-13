@@ -185,6 +185,24 @@ module FinSystem
         end
       end
 
+      # Adicionar campos extras a clientes (razao_social, nome_fantasia, endereco)
+      unless db[:clientes].columns.include?(:razao_social)
+        db.alter_table(:clientes) do
+          add_column :razao_social, String
+          add_column :nome_fantasia, String
+          add_column :endereco, String
+        end
+      end
+
+      # Adicionar endereco a fornecedores
+      unless db[:fornecedores].columns.include?(:endereco)
+        db.alter_table(:fornecedores) do
+          add_column :razao_social, String
+          add_column :nome_fantasia, String
+          add_column :endereco, String
+        end
+      end
+
       # ========================================
       # COMPROVANTES / ANEXOS
       # ========================================
