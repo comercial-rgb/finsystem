@@ -203,6 +203,13 @@ module FinSystem
         end
       end
 
+      # Adicionar socio_id a movimentacoes (para retirada de sócio)
+      unless db[:movimentacoes].columns.include?(:socio_id)
+        db.alter_table(:movimentacoes) do
+          add_column :socio_id, Integer
+        end
+      end
+
       # ========================================
       # COMPROVANTES / ANEXOS
       # ========================================

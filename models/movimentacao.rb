@@ -70,6 +70,7 @@ module FinSystem
           categoria_id: params[:categoria_id]&.to_i,
           cliente_id: params[:cliente_id]&.to_i,
           fornecedor_id: params[:fornecedor_id]&.to_i,
+          socio_id: params[:socio_id]&.to_i,
           usuario_id: params[:usuario_id].to_i,
           tipo: params[:tipo],
           data_movimentacao: data_mov,
@@ -162,7 +163,7 @@ module FinSystem
       def self.atualizar(id, params)
         mov = find(id)
         update_data = {}
-        %i[categoria_id cliente_id fornecedor_id conta_bancaria_id tipo data_movimentacao
+        %i[categoria_id cliente_id fornecedor_id conta_bancaria_id socio_id tipo data_movimentacao
            descricao valor_bruto valor_liquido lucro tipo_operacao numero_documento
            status forma_pagamento observacoes conciliado referencia_banco].each do |field|
           if params[field]
@@ -207,6 +208,7 @@ module FinSystem
                   .left_join(:categorias, Sequel[:categorias][:id] => Sequel[:movimentacoes][:categoria_id])
                   .left_join(:clientes, Sequel[:clientes][:id] => Sequel[:movimentacoes][:cliente_id])
                   .left_join(:fornecedores, Sequel[:fornecedores][:id] => Sequel[:movimentacoes][:fornecedor_id])
+                  .left_join(:socios, Sequel[:socios][:id] => Sequel[:movimentacoes][:socio_id])
 
         # Filtros
         query = query.where(Sequel[:movimentacoes][:empresa_id] => filtros[:empresa_id].to_i) if filtros[:empresa_id]
@@ -233,6 +235,8 @@ module FinSystem
           .select_append(Sequel[:categorias][:cor].as(:categoria_cor))
           .select_append(Sequel[:clientes][:nome].as(:cliente_nome))
           .select_append(Sequel[:fornecedores][:nome].as(:fornecedor_nome))
+          .select_append(Sequel[:socios][:nome].as(:socio_nome))
+          .select_append(Sequel[:socios][:percentual_participacao].as(:socio_percentual))
           .order(Sequel.desc(Sequel[:movimentacoes][:data_movimentacao]), Sequel.desc(Sequel[:movimentacoes][:id]))
           .all
       end
@@ -285,7 +289,7 @@ module FinSystem
 
         query.left_join(:movimentacoes, Sequel.&(
                           Sequel[:movimentacoes][:conta_bancaria_id] => Sequel[:contas_bancarias][:id],
-                          Sequel[:movimentacoes][:status] => %w[confirmado conciliado]
+                          Sequel[:movimentacoes][:status] => %w[confirmado conciliado transferencia]
                         ))
              .group(Sequel[:contas_bancarias][:id], Sequel[:contas_bancarias][:banco],
                     Sequel[:contas_bancarias][:apelido], Sequel[:contas_bancarias][:saldo_inicial],
@@ -383,7 +387,7 @@ module FinSystem
         empresa_destino = db[:empresas].where(id: conta_destino[:empresa_id]).first
 
         db.transaction do
-          # 1. Criar movimentação de saída na conta origem
+          # 1. Criar movimentação de saída na conta origem (status 'transferencia' - não afeta receita/despesa real)
           saida_id = table.insert(
             empresa_id: conta_origem[:empresa_id],
             conta_bancaria_id: conta_origem_id,
@@ -396,14 +400,14 @@ module FinSystem
             valor_liquido: valor,
             lucro: 0,
             tipo_operacao: 'transferencia',
-            status: 'confirmado',
+            status: 'transferencia',
             forma_pagamento: 'ted',
             pago: true,
             tipo_cobranca: 'unica',
             observacoes: descricao
           )
 
-          # 2. Criar movimentação de entrada na conta destino
+          # 2. Criar movimentação de entrada na conta destino (status 'transferencia' - não afeta receita/despesa real)
           entrada_id = table.insert(
             empresa_id: conta_destino[:empresa_id],
             conta_bancaria_id: conta_destino_id,
@@ -416,7 +420,7 @@ module FinSystem
             valor_liquido: valor,
             lucro: 0,
             tipo_operacao: 'transferencia',
-            status: 'confirmado',
+            status: 'transferencia',
             forma_pagamento: 'ted',
             pago: true,
             tipo_cobranca: 'unica',
@@ -436,7 +440,7 @@ module FinSystem
             movimentacao_entrada_id: entrada_id
           )
 
-          # 4. Atualizar saldos
+          # 4. Atualizar saldos (transferências afetam saldo das contas diretamente)
           atualizar_saldo_conta(conta_origem_id)
           atualizar_saldo_conta(conta_destino_id)
 
@@ -456,8 +460,8 @@ module FinSystem
         return unless conta
 
         saldo_inicial = conta[:saldo_inicial] || 0
-        entradas = table.where(conta_bancaria_id: conta_id, status: %w[confirmado conciliado], tipo: 'receita').sum(:valor_bruto) || 0
-        saidas = table.where(conta_bancaria_id: conta_id, status: %w[confirmado conciliado], tipo: 'despesa').sum(:valor_bruto) || 0
+        entradas = table.where(conta_bancaria_id: conta_id, status: %w[confirmado conciliado transferencia], tipo: 'receita').sum(:valor_bruto) || 0
+        saidas = table.where(conta_bancaria_id: conta_id, status: %w[confirmado conciliado transferencia], tipo: 'despesa').sum(:valor_bruto) || 0
 
         saldo_atual = saldo_inicial + entradas - saidas
         db[:contas_bancarias].where(id: conta_id).update(saldo_atual: saldo_atual)

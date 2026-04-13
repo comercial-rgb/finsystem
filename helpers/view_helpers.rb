@@ -50,10 +50,11 @@ module FinSystem
       # Badge de status
       def badge_status(status)
         cores = {
-          'confirmado' => 'bg-green-100 text-green-800',
-          'pendente'   => 'bg-yellow-100 text-yellow-800',
-          'cancelado'  => 'bg-red-100 text-red-800',
-          'conciliado' => 'bg-blue-100 text-blue-800'
+          'confirmado'    => 'bg-green-100 text-green-800',
+          'pendente'      => 'bg-yellow-100 text-yellow-800',
+          'cancelado'     => 'bg-red-100 text-red-800',
+          'conciliado'    => 'bg-blue-100 text-blue-800',
+          'transferencia' => 'bg-purple-100 text-purple-800'
         }
         classe = cores[status] || 'bg-gray-100 text-gray-800'
         "<span class='px-2 py-1 text-xs font-medium rounded-full #{classe}'>#{status&.capitalize}</span>"

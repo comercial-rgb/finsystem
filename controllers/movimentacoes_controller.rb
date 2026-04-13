@@ -37,9 +37,10 @@ module FinSystem
 
         all_movimentacoes = Models::Movimentacao.listar(filtros)
 
-        # Totais dos filtros atuais
-        @total_receitas = all_movimentacoes.select { |m| m[:tipo] == 'receita' }.sum { |m| m[:valor_bruto] || 0 }
-        @total_despesas = all_movimentacoes.select { |m| m[:tipo] == 'despesa' }.sum { |m| m[:valor_bruto] || 0 }
+        # Totais dos filtros atuais (exclui cancelados e transferências do cálculo de saldo)
+        ativas = all_movimentacoes.reject { |m| %w[cancelado transferencia].include?(m[:status]) }
+        @total_receitas = ativas.select { |m| m[:tipo] == 'receita' }.sum { |m| m[:valor_bruto] || 0 }
+        @total_despesas = ativas.select { |m| m[:tipo] == 'despesa' }.sum { |m| m[:valor_bruto] || 0 }
         @saldo_periodo = @total_receitas - @total_despesas
         @total_registros = all_movimentacoes.size
         @total_pages = (@total_registros / @per_page.to_f).ceil
@@ -93,6 +94,7 @@ module FinSystem
         @categorias_despesa = FinSystem::Database.db[:categorias].where(tipo: 'despesa', ativo: true).all
         @clientes = FinSystem::Database.db[:clientes].where(ativo: true).order(:nome).all
         @fornecedores = FinSystem::Database.db[:fornecedores].where(ativo: true).order(:nome).all
+        @socios = FinSystem::Database.db[:socios].where(ativo: true).order(:nome).all
 
         erb :'movimentacoes/form', layout: :'layouts/application'
       end
@@ -161,6 +163,7 @@ module FinSystem
         @clientes = FinSystem::Database.db[:clientes].where(ativo: true).order(:nome).all
         @fornecedores = FinSystem::Database.db[:fornecedores].where(ativo: true).order(:nome).all
         @comprovantes = Models::Comprovante.por_movimentacao(params[:id].to_i)
+        @socios = FinSystem::Database.db[:socios].where(ativo: true).order(:nome).all
 
         erb :'movimentacoes/edit', layout: :'layouts/application'
       end

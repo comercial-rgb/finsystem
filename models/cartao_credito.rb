@@ -199,8 +199,48 @@ module FinSystem
 
         db[:despesas_cartao].where(id: id).update(update_data)
 
-        # Recalcular fatura
-        _recalcular_fatura(despesa[:fatura_id])
+        # Se valor_total mudou e a despesa é parcelada, recalcular parcelas futuras
+        if update_data[:valor_total] && despesa[:total_parcelas] > 1
+          novo_total = update_data[:valor_total]
+          nova_parcela = (novo_total / despesa[:total_parcelas]).round(2)
+
+          # Atualizar todas as parcelas irmãs (mesmo cartão, mesmo valor_total original, mesma data_compra, mesmas parcelas)
+          # Identificar irmãs pelo padrão: mesmo cartao_id, total_parcelas e data_compra
+          db[:despesas_cartao]
+            .where(cartao_id: despesa[:cartao_id], data_compra: despesa[:data_compra], total_parcelas: despesa[:total_parcelas], valor_total: despesa[:valor_total])
+            .update(valor_total: novo_total, valor_parcela: nova_parcela)
+
+          # Recalcular todas as faturas afetadas
+          faturas_afetadas = db[:despesas_cartao]
+            .where(cartao_id: despesa[:cartao_id], data_compra: despesa[:data_compra], total_parcelas: despesa[:total_parcelas], valor_total: novo_total)
+            .select(:fatura_id).distinct.all
+          faturas_afetadas.each { |f| _recalcular_fatura(f[:fatura_id]) }
+        elsif update_data[:valor_parcela] && despesa[:total_parcelas] > 1
+          # Se só valor_parcela mudou, atualizar parcelas futuras (parcela_atual > atual)
+          nova_parcela = update_data[:valor_parcela]
+
+          db[:despesas_cartao]
+            .where(cartao_id: despesa[:cartao_id], data_compra: despesa[:data_compra], total_parcelas: despesa[:total_parcelas], valor_total: despesa[:valor_total])
+            .where { parcela_atual >= despesa[:parcela_atual] }
+            .update(valor_parcela: nova_parcela)
+
+          # Recalcular novo valor total baseado nas parcelas
+          novo_total = db[:despesas_cartao]
+            .where(cartao_id: despesa[:cartao_id], data_compra: despesa[:data_compra], total_parcelas: despesa[:total_parcelas])
+            .sum(:valor_parcela) || 0
+          db[:despesas_cartao]
+            .where(cartao_id: despesa[:cartao_id], data_compra: despesa[:data_compra], total_parcelas: despesa[:total_parcelas])
+            .update(valor_total: novo_total)
+
+          # Recalcular faturas afetadas
+          faturas_afetadas = db[:despesas_cartao]
+            .where(cartao_id: despesa[:cartao_id], data_compra: despesa[:data_compra], total_parcelas: despesa[:total_parcelas])
+            .select(:fatura_id).distinct.all
+          faturas_afetadas.each { |f| _recalcular_fatura(f[:fatura_id]) }
+        else
+          # Recalcular fatura apenas da despesa editada
+          _recalcular_fatura(despesa[:fatura_id])
+        end
 
         # Atualizar limite do cartão
         _atualizar_limite(despesa[:cartao_id])

@@ -44,8 +44,7 @@
       <option value="">Todos Status</option>
       <option value="confirmado" <%= @status == 'confirmado' ? 'selected' : '' %>>Confirmado</option>
       <option value="pendente" <%= @status == 'pendente' ? 'selected' : '' %>>Pendente</option>
-      <option value="conciliado" <%= @status == 'conciliado' ? 'selected' : '' %>>Conciliado</option>
-    </select>
+      <option value="conciliado" <%= @status == 'conciliado' ? 'selected' : '' %>>Conciliado</option>      <option value=\"transferencia\" <%= @status == 'transferencia' ? 'selected' : '' %>>Transferência</option>    </select>
     <select name="mes" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
       <% meses_select.each do |num, nome| %>
         <option value="<%= num %>" <%= @mes == num ? 'selected' : '' %>><%= nome %></option>
@@ -117,7 +116,12 @@
                 </span>
               <% end %>
             </td>
-            <td class="px-4 py-3 text-slate-600 text-xs"><%= m[:cliente_nome] || m[:fornecedor_nome] || '-' %></td>
+            <td class="px-4 py-3 text-slate-600 text-xs">
+              <%= m[:cliente_nome] || m[:fornecedor_nome] || '-' %>
+              <% if m[:socio_nome] %>
+                <div class="text-purple-600 font-medium">👤 <%= m[:socio_nome] %> (<%= m[:socio_percentual] %>%)</div>
+              <% end %>
+            </td>
             <td class="px-4 py-3 text-slate-600 text-xs"><%= m[:empresa_nome] %></td>
             <td class="px-4 py-3 text-slate-600 text-xs"><%= m[:banco_nome] %></td>
             <td class="px-4 py-3 text-right font-bold <%= cor_valor(m[:tipo]) %> whitespace-nowrap">
@@ -133,6 +137,9 @@
             <td class="px-4 py-3"><%= badge_status(m[:status]) %></td>
             <td class="px-4 py-3 text-center">
               <div class="flex items-center justify-center gap-1">
+                <button onclick="showDetalheModal(<%= m[:id] %>)" class="p-1.5 text-slate-400 hover:text-cyan-600 transition" title="Detalhes">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
                 <a href="/movimentacoes/<%= m[:id] %>/editar" class="p-1.5 text-slate-400 hover:text-indigo-600 transition" title="Editar">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </a>
@@ -198,3 +205,91 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Detalhes -->
+<div id="detalhe-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-800">Detalhes da Movimentação</h3>
+        <button onclick="closeDetalheModal()" class="p-1 text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="detalhe-content" class="space-y-3">
+        <p class="text-sm text-slate-400">Carregando...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var movData = {};
+<% @movimentacoes.each do |m| %>
+movData[<%= m[:id] %>] = {
+  id: <%= m[:id] %>,
+  tipo: '<%= m[:tipo] %>',
+  descricao: '<%= m[:descricao]&.gsub("'", "\\\\'") %>',
+  data: '<%= fmt_data(m[:data_movimentacao]) %>',
+  valor: '<%= fmt_moeda(m[:valor_bruto]) %>',
+  lucro: '<%= m[:lucro] && m[:lucro] > 0 ? fmt_moeda(m[:lucro]) : "-" %>',
+  status: '<%= m[:status] %>',
+  categoria: '<%= m[:categoria_nome] || "-" %>',
+  empresa: '<%= m[:empresa_nome] || "-" %>',
+  banco: '<%= m[:banco_nome] || "-" %>',
+  cliente: '<%= m[:cliente_nome] || "-" %>',
+  fornecedor: '<%= m[:fornecedor_nome] || "-" %>',
+  tipo_operacao: '<%= m[:tipo_operacao]&.gsub("_", " ")&.capitalize || "-" %>',
+  forma_pagamento: '<%= m[:forma_pagamento]&.gsub("_", " ")&.capitalize || "-" %>',
+  numero_documento: '<%= m[:numero_documento] || "-" %>',
+  observacoes: '<%= m[:observacoes]&.gsub("'", "\\\\'")&.gsub("\n", " ") || "-" %>',
+  conciliado: <%= m[:conciliado] ? 'true' : 'false' %>,
+  tipo_cobranca: '<%= m[:tipo_cobranca] || "unica" %>',
+  parcela: '<%= m[:parcela_atual] %>/<%= m[:total_parcelas] %>',
+  socio_nome: '<%= m[:socio_nome] || "" %>',
+  socio_percentual: '<%= m[:socio_percentual] || "" %>'
+};
+<% end %>
+
+function showDetalheModal(id) {
+  var m = movData[id];
+  if (!m) return;
+  var tipoClass = m.tipo === 'receita' ? 'text-emerald-600' : 'text-red-600';
+  var tipoPrefix = m.tipo === 'receita' ? '+' : '-';
+  var html = '<div class="grid grid-cols-2 gap-3 text-sm">' +
+    '<div><span class="text-slate-400 text-xs block">ID</span><span class="font-medium text-slate-800">#' + m.id + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Data</span><span class="font-medium text-slate-800">' + m.data + '</span></div>' +
+    '<div class="col-span-2"><span class="text-slate-400 text-xs block">Descrição</span><span class="font-medium text-slate-800">' + m.descricao + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Tipo</span><span class="font-medium capitalize text-slate-800">' + m.tipo + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Valor</span><span class="font-bold ' + tipoClass + '">' + tipoPrefix + ' ' + m.valor + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Lucro</span><span class="font-medium text-emerald-600">' + m.lucro + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Status</span><span class="font-medium capitalize text-slate-800">' + m.status + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Categoria</span><span class="font-medium text-slate-800">' + m.categoria + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Tipo Operação</span><span class="font-medium text-slate-800">' + m.tipo_operacao + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Empresa</span><span class="font-medium text-slate-800">' + m.empresa + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Banco</span><span class="font-medium text-slate-800">' + m.banco + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Cliente</span><span class="font-medium text-slate-800">' + m.cliente + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Fornecedor</span><span class="font-medium text-slate-800">' + m.fornecedor + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Forma Pagamento</span><span class="font-medium text-slate-800">' + m.forma_pagamento + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Nº Documento</span><span class="font-medium text-slate-800">' + m.numero_documento + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Cobrança</span><span class="font-medium text-slate-800 capitalize">' + m.tipo_cobranca + (m.tipo_cobranca !== 'unica' ? ' (' + m.parcela + ')' : '') + '</span></div>' +
+    '<div><span class="text-slate-400 text-xs block">Conciliado</span><span class="font-medium text-slate-800">' + (m.conciliado ? '✅ Sim' : '❌ Não') + '</span></div>' +
+    (m.socio_nome ? '<div><span class="text-slate-400 text-xs block">Sócio</span><span class="font-medium text-purple-700">👤 ' + m.socio_nome + ' (' + m.socio_percentual + '%)</span></div>' : '') +
+    '<div class="col-span-2"><span class="text-slate-400 text-xs block">Observações</span><span class="font-medium text-slate-800">' + m.observacoes + '</span></div>' +
+    '</div>' +
+    '<div class="mt-4 flex justify-end gap-2"><a href="/movimentacoes/' + m.id + '/editar" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">Editar</a>' +
+    '<button onclick="closeDetalheModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm hover:bg-slate-200">Fechar</button></div>';
+  document.getElementById('detalhe-content').innerHTML = html;
+  document.getElementById('detalhe-modal').classList.remove('hidden');
+  document.getElementById('detalhe-modal').classList.add('flex');
+}
+
+function closeDetalheModal() {
+  document.getElementById('detalhe-modal').classList.add('hidden');
+  document.getElementById('detalhe-modal').classList.remove('flex');
+}
+
+document.getElementById('detalhe-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeDetalheModal();
+});
+</script>
