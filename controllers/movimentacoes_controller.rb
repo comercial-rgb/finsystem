@@ -212,6 +212,28 @@ module FinSystem
       end
 
       # ========================================
+      # CONFIRMAR MOVIMENTAÇÃO (pendente → confirmado, atualiza saldo)
+      # ========================================
+      post '/movimentacoes/:id/confirmar' do
+        mov = Models::Movimentacao.find(params[:id].to_i)
+        halt 404 unless mov
+
+        Models::Movimentacao.confirmar(params[:id].to_i)
+
+        Models::AuditLog.registrar(
+          usuario_id: usuario_logado[:id],
+          acao: 'confirm',
+          entidade: 'movimentacao',
+          entidade_id: params[:id].to_i,
+          detalhes: "Movimentação confirmada: #{mov[:descricao]} - R$ #{mov[:valor_bruto]}",
+          ip: request.ip
+        )
+
+        session[:flash_message] = 'Movimentação confirmada! Saldo atualizado.'
+        redirect back
+      end
+
+      # ========================================
       # MARCAR COMO PAGO
       # ========================================
       post '/movimentacoes/:id/marcar_pago' do

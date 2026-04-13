@@ -138,7 +138,19 @@
     <!-- ========================================
          MAIN CONTENT
     ======================================== -->
-    <main class="flex-1 ml-[260px] min-h-screen">
+    <!-- Mobile overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <main class="flex-1 main-content min-h-screen">
+      <!-- Mobile header -->
+      <div class="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+        <button id="mobile-menu-btn" onclick="toggleSidebar()" class="p-2 text-slate-600 hover:text-slate-800 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <img src="/images/logo-simbolo-branco.png" alt="" class="w-7 h-7 rounded bg-slate-900 p-0.5">
+        <span class="font-semibold text-slate-800 text-sm">FinSystem</span>
+      </div>
+
       <!-- Flash Messages -->
       <% if flash_message %>
         <div class="mx-6 mt-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 p-4 rounded-r-lg fade-in" id="flash-success">
@@ -162,5 +174,13 @@
       </div>
     </main>
   </div>
+  <script>
+    function toggleSidebar() {
+      var sb = document.getElementById('sidebar');
+      var ov = document.getElementById('sidebar-overlay');
+      sb.classList.toggle('sidebar-open');
+      ov.classList.toggle('active');
+    }
+  </script>
 </body>
 </html>

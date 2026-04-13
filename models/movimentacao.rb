@@ -283,9 +283,10 @@ module FinSystem
                   .left_join(:empresas, Sequel[:empresas][:id] => Sequel[:contas_bancarias][:empresa_id])
         query = query.where(Sequel[:contas_bancarias][:empresa_id] => empresa_id.to_i) if empresa_id && !empresa_id.to_s.empty?
 
-        query.left_join(:movimentacoes,
-                        Sequel[:movimentacoes][:conta_bancaria_id] => Sequel[:contas_bancarias][:id],
-                        Sequel[:movimentacoes][:status] => 'confirmado')
+        query.left_join(:movimentacoes, Sequel.&(
+                          Sequel[:movimentacoes][:conta_bancaria_id] => Sequel[:contas_bancarias][:id],
+                          Sequel[:movimentacoes][:status] => %w[confirmado conciliado]
+                        ))
              .group(Sequel[:contas_bancarias][:id], Sequel[:contas_bancarias][:banco],
                     Sequel[:contas_bancarias][:apelido], Sequel[:contas_bancarias][:saldo_inicial],
                     Sequel[:contas_bancarias][:moeda], Sequel[:empresas][:nome_fantasia])
@@ -337,6 +338,7 @@ module FinSystem
 
       # Conciliar movimentação
       def self.conciliar(id, referencia)
+        mov = find(id)
         table.where(id: id).update(
           conciliado: true,
           status: 'conciliado',
@@ -344,6 +346,20 @@ module FinSystem
           referencia_banco: referencia,
           updated_at: Time.now
         )
+        atualizar_saldo_conta(mov[:conta_bancaria_id]) if mov
+      end
+
+      # Confirmar movimentação pendente (atualiza saldo)
+      def self.confirmar(id)
+        mov = find(id)
+        return unless mov
+        table.where(id: id).update(
+          status: 'confirmado',
+          pago: true,
+          updated_at: Time.now
+        )
+        atualizar_saldo_conta(mov[:conta_bancaria_id])
+        registrar_historico_saldo(mov[:conta_bancaria_id], mov[:data_movimentacao], 'confirmacao', id, mov[:descricao])
       end
 
       # ========================================
@@ -440,8 +456,8 @@ module FinSystem
         return unless conta
 
         saldo_inicial = conta[:saldo_inicial] || 0
-        entradas = table.where(conta_bancaria_id: conta_id, status: 'confirmado', tipo: 'receita').sum(:valor_bruto) || 0
-        saidas = table.where(conta_bancaria_id: conta_id, status: 'confirmado', tipo: 'despesa').sum(:valor_bruto) || 0
+        entradas = table.where(conta_bancaria_id: conta_id, status: %w[confirmado conciliado], tipo: 'receita').sum(:valor_bruto) || 0
+        saidas = table.where(conta_bancaria_id: conta_id, status: %w[confirmado conciliado], tipo: 'despesa').sum(:valor_bruto) || 0
 
         saldo_atual = saldo_inicial + entradas - saidas
         db[:contas_bancarias].where(id: conta_id).update(saldo_atual: saldo_atual)
