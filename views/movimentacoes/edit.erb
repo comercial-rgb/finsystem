@@ -18,9 +18,11 @@
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
           <select name="tipo" id="edit-tipo" onchange="toggleEditTipo()" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
-            <option value="receita" <%= @movimentacao[:tipo] == 'receita' ? 'selected' : '' %>>Receita</option>
-            <option value="despesa" <%= @movimentacao[:tipo] == 'despesa' ? 'selected' : '' %>>Despesa</option>
+            <option value="receita" <%= @movimentacao[:tipo] == 'receita' && !@movimentacao[:is_antecipacao] ? 'selected' : '' %>>Receita</option>
+            <option value="despesa" <%= @movimentacao[:tipo] == 'despesa' && !@movimentacao[:is_antecipacao] ? 'selected' : '' %>>Despesa</option>
+            <option value="antecipacao" <%= @movimentacao[:is_antecipacao] ? 'selected' : '' %>>Antecipação</option>
           </select>
+          <input type="hidden" name="is_antecipacao" id="edit-is-antecipacao" value="<%= @movimentacao[:is_antecipacao] ? 'true' : 'false' %>">
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Data</label>
@@ -56,7 +58,7 @@
       <h2 class="font-semibold text-slate-800 mb-4">Valores</h2>
 
       <!-- Campos para RECEITA -->
-      <div id="edit-campos-receita" class="<%= @movimentacao[:tipo] == 'receita' ? '' : 'hidden' %> grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div id="edit-campos-receita" class="<%= @movimentacao[:tipo] == 'receita' && !@movimentacao[:is_antecipacao] ? '' : 'hidden' %> grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Valor Bruto *</label>
           <input type="text" id="edit-valor-bruto-receita" value="<%= fmt_valor_input(@movimentacao[:valor_bruto]) %>"
@@ -79,7 +81,7 @@
       </div>
 
       <!-- Campos para DESPESA -->
-      <div id="edit-campos-despesa" class="<%= @movimentacao[:tipo] == 'despesa' ? '' : 'hidden' %> grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div id="edit-campos-despesa" class="<%= @movimentacao[:tipo] == 'despesa' || @movimentacao[:is_antecipacao] ? '' : 'hidden' %> grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Valor *</label>
           <input type="text" id="edit-valor-bruto-despesa" value="<%= fmt_valor_input(@movimentacao[:valor_bruto]) %>"
@@ -131,7 +133,7 @@
         </div>
 
         <!-- Cliente (visível para Receita) -->
-        <div id="edit-campo-cliente" class="<%= @movimentacao[:tipo] == 'receita' ? '' : 'hidden' %>">
+        <div id="edit-campo-cliente" class="<%= @movimentacao[:tipo] == 'receita' && !@movimentacao[:is_antecipacao] ? '' : 'hidden' %>">
           <label class="block text-sm font-medium text-slate-700 mb-1">Cliente</label>
           <input type="text" id="edit-busca-cliente" placeholder="Pesquisar cliente..."
                  class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-1" autocomplete="off">
@@ -144,14 +146,38 @@
         </div>
 
         <!-- Fornecedor (visível para Despesa) -->
-        <div id="edit-campo-fornecedor" class="<%= @movimentacao[:tipo] == 'despesa' ? '' : 'hidden' %>">
-          <label class="block text-sm font-medium text-slate-700 mb-1">Fornecedor</label>
-          <select name="fornecedor_id" id="edit-select-fornecedor" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
-            <option value="">-- Selecione --</option>
-            <% @fornecedores.each do |f| %>
-              <option value="<%= f[:id] %>" <%= @movimentacao[:fornecedor_id] == f[:id] ? 'selected' : '' %>><%= f[:nome] %><%= f[:cnpj_cpf_ein] ? " (#{f[:cnpj_cpf_ein]})" : '' %></option>
-            <% end %>
-          </select>
+        <div id="edit-campo-fornecedor" class="<%= @movimentacao[:tipo] == 'despesa' || @movimentacao[:is_antecipacao] ? '' : 'hidden' %>">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Fornecedor (CNPJ/CPF)</label>
+          <div class="flex gap-2">
+            <input type="text" id="fornecedor_documento" placeholder="00.000.000/0001-00 ou 000.000.000-00"
+                   value="<%= @fornecedores.find { |f| f[:id] == @movimentacao[:fornecedor_id] }&.dig(:cnpj_cpf_ein) %>"
+                   class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm" onblur="buscarDocumento('fornecedor')">
+            <button type="button" onclick="buscarDocumento('fornecedor')" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">🔍</button>
+          </div>
+          <input type="hidden" name="fornecedor_id" id="fornecedor_id_hidden" value="<%= @movimentacao[:fornecedor_id] %>">
+          <% forn_atual = @fornecedores.find { |f| f[:id] == @movimentacao[:fornecedor_id] } %>
+          <div id="fornecedor_info" class="<%= forn_atual ? '' : 'hidden' %> mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="font-medium text-emerald-800" id="fornecedor_nome_display"><%= forn_atual&.dig(:nome) %></p>
+                <p class="text-emerald-600 text-xs" id="fornecedor_doc_display"><%= forn_atual&.dig(:cnpj_cpf_ein) %></p>
+              </div>
+              <button type="button" onclick="limparVinculo('fornecedor')" class="text-red-500 text-xs hover:text-red-700">✕ Remover</button>
+            </div>
+          </div>
+          <div id="fornecedor_cadastro" class="hidden mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm space-y-2">
+            <p class="font-medium text-amber-800">📋 Cadastrar novo fornecedor</p>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" id="fornecedor_razao" placeholder="Razão Social *" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
+              <input type="text" id="fornecedor_fantasia" placeholder="Nome Fantasia" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
+              <input type="email" id="fornecedor_email" placeholder="Email" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
+              <input type="text" id="fornecedor_telefone" placeholder="Telefone" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
+              <input type="text" id="fornecedor_endereco" placeholder="Endereço" class="col-span-2 px-2 py-1.5 border border-amber-300 rounded text-xs">
+              <input type="text" id="fornecedor_cidade" placeholder="Cidade" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
+              <input type="text" id="fornecedor_estado" placeholder="UF" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
+            </div>
+            <button type="button" onclick="criarEntidade('fornecedor')" class="w-full px-3 py-1.5 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700">Cadastrar e Vincular</button>
+          </div>
         </div>
 
         <div>
@@ -282,6 +308,11 @@ var editTipoOperacaoOpcoes = {
     { group: '📋 Outros', options: [
       { value: 'outros', label: 'Outros' }
     ]}
+  ],
+  antecipacao: [
+    { group: '⚡ Antecipação', options: [
+      { value: 'antecipacao', label: 'Antecipação a Fornecedor' }
+    ]}
   ]
 };
 
@@ -317,26 +348,35 @@ function filtrarEditCategorias(tipo) {
 
 function toggleEditTipo() {
   var tipo = document.getElementById('edit-tipo').value;
+  var isAntecipacao = (tipo === 'antecipacao');
+
+  // Atualizar hidden field
+  document.getElementById('edit-is-antecipacao').value = isAntecipacao ? 'true' : 'false';
+
+  // Se antecipação, tratar como despesa internamente
+  var tipoReal = isAntecipacao ? 'despesa' : tipo;
 
   // Mostrar campos de valor corretos
-  document.getElementById('edit-campos-receita').classList.toggle('hidden', tipo !== 'receita');
-  document.getElementById('edit-campos-despesa').classList.toggle('hidden', tipo !== 'despesa');
+  document.getElementById('edit-campos-receita').classList.toggle('hidden', tipoReal !== 'receita');
+  document.getElementById('edit-campos-despesa').classList.toggle('hidden', tipoReal !== 'despesa');
 
   // Cliente vs Fornecedor
-  document.getElementById('edit-campo-cliente').classList.toggle('hidden', tipo !== 'receita');
-  document.getElementById('edit-campo-fornecedor').classList.toggle('hidden', tipo !== 'despesa');
+  document.getElementById('edit-campo-cliente').classList.toggle('hidden', tipoReal !== 'receita');
+  document.getElementById('edit-campo-fornecedor').classList.toggle('hidden', tipoReal !== 'despesa');
 
   // Sincronizar hidden fields
   syncEditValor();
 
   // Tipo de operação e categorias
-  popularEditTipoOperacao(tipo, '');
-  filtrarEditCategorias(tipo);
+  var tipoParaOpcoes = isAntecipacao ? 'antecipacao' : tipo;
+  popularEditTipoOperacao(tipoParaOpcoes, '');
+  filtrarEditCategorias(tipoReal);
 }
 
 function syncEditValor() {
   var tipo = document.getElementById('edit-tipo').value;
-  if (tipo === 'receita') {
+  var tipoReal = (tipo === 'antecipacao') ? 'despesa' : tipo;
+  if (tipoReal === 'receita') {
     document.getElementById('edit-valor-bruto-hidden').value = document.getElementById('edit-valor-bruto-receita').value;
     document.getElementById('edit-lucro-hidden').value = document.getElementById('edit-lucro-receita').value || '0,00';
   } else {
@@ -383,9 +423,11 @@ document.querySelector('form[action*="/movimentacoes/"]').addEventListener('subm
 // Inicializar ao carregar
 document.addEventListener('DOMContentLoaded', function() {
   var tipo = document.getElementById('edit-tipo').value;
+  var isAntecipacao = (tipo === 'antecipacao');
+  var tipoParaOpcoes = isAntecipacao ? 'antecipacao' : tipo;
   var tipoOperacaoAtual = '<%= @movimentacao[:tipo_operacao] || "" %>';
-  popularEditTipoOperacao(tipo, tipoOperacaoAtual);
-  filtrarEditCategorias(tipo);
+  popularEditTipoOperacao(tipoParaOpcoes, tipoOperacaoAtual);
+  filtrarEditCategorias(isAntecipacao ? 'despesa' : tipo);
 
   // Busca de cliente
   var inputCli = document.getElementById('edit-busca-cliente');
@@ -416,227 +458,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (this.value) {
         inputCli.value = this.options[this.selectedIndex].text;
         this.size = 1;
-      }
-    });
-  }
-});
-</script>
-<!-- views/movimentacoes/edit.erb - Editar movimentação -->
-
-<div class="max-w-4xl mx-auto">
-  <div class="flex items-center gap-3 mb-6">
-    <a href="/movimentacoes" class="p-2 text-slate-400 hover:text-slate-600 transition">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-    </a>
-    <h1 class="text-2xl font-bold text-slate-800">Editar Movimentação #<%= @movimentacao[:id] %></h1>
-  </div>
-
-  <form action="/movimentacoes/<%= @movimentacao[:id] %>" method="POST" enctype="multipart/form-data">
-    <input type="hidden" name="_method" value="PUT">
-
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
-          <select name="tipo" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
-            <option value="receita" <%= @movimentacao[:tipo] == 'receita' ? 'selected' : '' %>>Receita</option>
-            <option value="despesa" <%= @movimentacao[:tipo] == 'despesa' ? 'selected' : '' %>>Despesa</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Data</label>
-          <input type="date" name="data_movimentacao" value="<%= @movimentacao[:data_movimentacao] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-slate-700 mb-1">Descrição</label>
-          <input type="text" name="descricao" value="<%= @movimentacao[:descricao] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Conta Bancária</label>
-          <select name="conta_bancaria_id" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
-            <% @contas.each do |c| %>
-              <option value="<%= c[:id] %>" <%= @movimentacao[:conta_bancaria_id] == c[:id] ? 'selected' : '' %>>
-                <%= c[:banco] %> (<%= c[:apelido] %>) - <%= c[:empresa_nome] %>
-              </option>
-            <% end %>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
-          <select name="categoria_id" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
-            <option value="">-- Selecione --</option>
-            <optgroup label="Receitas">
-              <% @categorias_receita.each do |c| %>
-                <option value="<%= c[:id] %>" <%= @movimentacao[:categoria_id] == c[:id] ? 'selected' : '' %>><%= c[:nome] %></option>
-              <% end %>
-            </optgroup>
-            <optgroup label="Despesas">
-              <% @categorias_despesa.each do |c| %>
-                <option value="<%= c[:id] %>" <%= @movimentacao[:categoria_id] == c[:id] ? 'selected' : '' %>><%= c[:nome] %></option>
-              <% end %>
-            </optgroup>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Tipo de Operação</label>
-          <select name="tipo_operacao" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
-            <option value="">-- Selecione --</option>
-            <optgroup label="💰 Receitas">
-              <option value="faturamento" <%= @movimentacao[:tipo_operacao] == 'faturamento' ? 'selected' : '' %>>Faturamento de Cliente</option>
-              <option value="comissao" <%= @movimentacao[:tipo_operacao] == 'comissao' ? 'selected' : '' %>>Comissão / Taxa de Serviço</option>
-            </optgroup>
-            <optgroup label="📤 Repasses e Fornecedores">
-              <option value="repasse" <%= @movimentacao[:tipo_operacao] == 'repasse' ? 'selected' : '' %>>Repasse a Fornecedor</option>
-              <option value="antecipacao" <%= @movimentacao[:tipo_operacao] == 'antecipacao' ? 'selected' : '' %>>Antecipação a Fornecedor</option>
-            </optgroup>
-            <optgroup label="🏢 Despesas Operacionais">
-              <option value="aluguel" <%= @movimentacao[:tipo_operacao] == 'aluguel' ? 'selected' : '' %>>Aluguel</option>
-              <option value="utilidade" <%= @movimentacao[:tipo_operacao] == 'utilidade' ? 'selected' : '' %>>Utilidades (Água/Luz/Internet/Tel)</option>
-              <option value="servidor" <%= @movimentacao[:tipo_operacao] == 'servidor' ? 'selected' : '' %>>Servidores / Hosting / Cloud</option>
-              <option value="software" <%= @movimentacao[:tipo_operacao] == 'software' ? 'selected' : '' %>>Software / Licenças / SaaS</option>
-              <option value="ia" <%= @movimentacao[:tipo_operacao] == 'ia' ? 'selected' : '' %>>Inteligência Artificial (APIs)</option>
-              <option value="material" <%= @movimentacao[:tipo_operacao] == 'material' ? 'selected' : '' %>>Material / Suprimentos</option>
-              <option value="marketing" <%= @movimentacao[:tipo_operacao] == 'marketing' ? 'selected' : '' %>>Marketing / Publicidade</option>
-              <option value="viagem" <%= @movimentacao[:tipo_operacao] == 'viagem' ? 'selected' : '' %>>Viagem / Deslocamento</option>
-            </optgroup>
-            <optgroup label="👥 Pessoal e Profissional">
-              <option value="salario" <%= @movimentacao[:tipo_operacao] == 'salario' ? 'selected' : '' %>>Salário / Folha de Pagamento</option>
-              <option value="prolabore" <%= @movimentacao[:tipo_operacao] == 'prolabore' ? 'selected' : '' %>>Pró-labore</option>
-              <option value="juridico" <%= @movimentacao[:tipo_operacao] == 'juridico' ? 'selected' : '' %>>Jurídico / Advocacia</option>
-              <option value="contabilidade" <%= @movimentacao[:tipo_operacao] == 'contabilidade' ? 'selected' : '' %>>Contabilidade</option>
-              <option value="consultoria" <%= @movimentacao[:tipo_operacao] == 'consultoria' ? 'selected' : '' %>>Consultoria</option>
-            </optgroup>
-            <optgroup label="🏛️ Governo e Financeiro">
-              <option value="imposto" <%= @movimentacao[:tipo_operacao] == 'imposto' ? 'selected' : '' %>>Imposto / Taxa Gov.</option>
-              <option value="boleto" <%= @movimentacao[:tipo_operacao] == 'boleto' ? 'selected' : '' %>>Boleto - Geral</option>
-              <option value="taxa_bancaria" <%= @movimentacao[:tipo_operacao] == 'taxa_bancaria' ? 'selected' : '' %>>Taxa Bancária</option>
-              <option value="seguro" <%= @movimentacao[:tipo_operacao] == 'seguro' ? 'selected' : '' %>>Seguro</option>
-            </optgroup>
-            <optgroup label="� Sócios">
-              <option value="retirada_socio" <%= @movimentacao[:tipo_operacao] == 'retirada_socio' ? 'selected' : '' %>>Retirada de Sócio</option>
-              <option value="pagamento_socio" <%= @movimentacao[:tipo_operacao] == 'pagamento_socio' ? 'selected' : '' %>>Pagamento com Dinheiro da Empresa</option>
-            </optgroup>
-            <optgroup label="📋 Outros">
-              <option value="outros" <%= @movimentacao[:tipo_operacao] == 'outros' ? 'selected' : '' %>>Outros</option>
-            </optgroup>
-          </select>
-        </div>
-        <div id="campo-socio-edit" class="<%= %w[retirada_socio pagamento_socio].include?(@movimentacao[:tipo_operacao]) ? '' : 'hidden' %>">
-          <label class="block text-sm font-medium text-slate-700 mb-1">Sócio</label>
-          <select name="socio_id" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
-            <option value="">-- Selecione --</option>
-            <% @socios.each do |s| %>
-              <option value="<%= s[:id] %>" <%= @movimentacao[:socio_id] == s[:id] ? 'selected' : '' %>><%= s[:nome] %> (<%= s[:percentual_participacao] %>%)</option>
-            <% end %>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Valor Bruto</label>
-          <input type="text" name="valor_bruto" value="<%= fmt_valor_input(@movimentacao[:valor_bruto]) %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm moeda-br">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Lucro</label>
-          <input type="text" name="lucro" value="<%= fmt_valor_input(@movimentacao[:lucro]) %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm moeda-br">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Forma Pagamento</label>
-          <select name="forma_pagamento" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
-            <% %w[pix ted boleto cartao_credito cartao_debito dinheiro wire_transfer ach].each do |fp| %>
-              <option value="<%= fp %>" <%= @movimentacao[:forma_pagamento] == fp ? 'selected' : '' %>><%= fp.gsub('_', ' ').capitalize %></option>
-            <% end %>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
-          <select name="status" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
-            <% %w[confirmado pendente cancelado conciliado].each do |st| %>
-              <option value="<%= st %>" <%= @movimentacao[:status] == st ? 'selected' : '' %>><%= st.capitalize %></option>
-            <% end %>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Nº Documento</label>
-          <input type="text" name="numero_documento" value="<%= @movimentacao[:numero_documento] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Ref. Banco (Conciliação)</label>
-          <input type="text" name="referencia_banco" value="<%= @movimentacao[:referencia_banco] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="ID do extrato bancário">
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-slate-700 mb-1">Observações</label>
-          <textarea name="observacoes" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"><%= @movimentacao[:observacoes] %></textarea>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-3 mt-6">
-        <a href="/movimentacoes" class="px-5 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50">Cancelar</a>
-        <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Salvar Alterações</button>
-      </div>
-    </div>
-  </form>
-
-  <!-- Comprovantes -->
-  <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-    <h2 class="font-semibold text-slate-800 mb-4">Comprovantes Anexados</h2>
-
-    <% if @comprovantes && !@comprovantes.empty? %>
-      <div class="space-y-2 mb-4">
-        <% @comprovantes.each do |comp| %>
-          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <div class="flex items-center gap-3">
-              <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              <div>
-                <p class="text-sm font-medium text-slate-800"><%= comp[:nome_original] %></p>
-                <p class="text-xs text-slate-400"><%= comp[:tipo_arquivo]&.upcase %> &middot; <%= (comp[:tamanho_bytes].to_f / 1024).round(1) %> KB &middot; <%= fmt_datetime(comp[:created_at]) %></p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <a href="/comprovantes/<%= comp[:id] %>/download" class="px-3 py-1.5 text-xs bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 font-medium">Download</a>
-              <form action="/comprovantes/<%= comp[:id] %>" method="POST" onsubmit="return confirm('Excluir comprovante?')">
-                <input type="hidden" name="_method" value="DELETE">
-                <button class="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium">Excluir</button>
-              </form>
-            </div>
-          </div>
-        <% end %>
-      </div>
-    <% else %>
-      <p class="text-sm text-slate-400 mb-4">Nenhum comprovante anexado</p>
-    <% end %>
-
-    <!-- Upload novo comprovante -->
-    <form action="/movimentacoes/<%= @movimentacao[:id] %>/comprovante" method="POST" enctype="multipart/form-data" class="border-t border-slate-100 pt-4">
-      <div class="flex items-center gap-3">
-        <input type="file" name="comprovante" accept=".pdf,.jpg,.jpeg,.png,.webp" required
-               class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700">
-        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Anexar</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Excluir -->
-  <div class="bg-red-50 rounded-xl border border-red-200 p-6">
-    <h3 class="font-semibold text-red-800 mb-2">Zona de Perigo</h3>
-    <p class="text-sm text-red-600 mb-3">Esta ação não pode ser desfeita.</p>
-    <form action="/movimentacoes/<%= @movimentacao[:id] %>" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta movimentação?')">
-      <input type="hidden" name="_method" value="DELETE">
-      <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">Excluir Movimentação</button>
-    </form>
-  </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  var tipoOp = document.querySelector('[name="tipo_operacao"]');
-  if (tipoOp) {
-    tipoOp.addEventListener('change', function() {
-      var campo = document.getElementById('campo-socio-edit');
-      if (this.value === 'retirada_socio' || this.value === 'pagamento_socio') {
-        campo.classList.remove('hidden');
-      } else {
-        campo.classList.add('hidden');
       }
     });
   }

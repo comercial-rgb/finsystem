@@ -170,6 +170,12 @@ module FinSystem
 
       # Atualizar
       put '/movimentacoes/:id' do
+        # Se o tipo veio como 'antecipacao', converter para despesa + flag
+        if params[:tipo] == 'antecipacao'
+          params[:tipo] = 'despesa'
+          params[:is_antecipacao] = 'true'
+        end
+
         Models::Movimentacao.atualizar(params[:id].to_i, params)
 
         # Upload de novo comprovante

@@ -67,10 +67,10 @@ module FinSystem
         data = {
           empresa_id: params[:empresa_id].to_i,
           conta_bancaria_id: params[:conta_bancaria_id].to_i,
-          categoria_id: params[:categoria_id]&.to_i,
-          cliente_id: params[:cliente_id]&.to_i,
-          fornecedor_id: params[:fornecedor_id]&.to_i,
-          socio_id: params[:socio_id]&.to_i,
+          categoria_id: params[:categoria_id].to_s.strip.empty? ? nil : params[:categoria_id].to_i,
+          cliente_id: params[:cliente_id].to_s.strip.empty? ? nil : params[:cliente_id].to_i,
+          fornecedor_id: params[:fornecedor_id].to_s.strip.empty? ? nil : params[:fornecedor_id].to_i,
+          socio_id: params[:socio_id].to_s.strip.empty? ? nil : params[:socio_id].to_i,
           usuario_id: params[:usuario_id].to_i,
           tipo: params[:tipo],
           data_movimentacao: data_mov,
@@ -165,7 +165,7 @@ module FinSystem
         update_data = {}
         %i[categoria_id cliente_id fornecedor_id conta_bancaria_id socio_id tipo data_movimentacao
            descricao valor_bruto valor_liquido lucro tipo_operacao numero_documento
-           status forma_pagamento observacoes conciliado referencia_banco].each do |field|
+           status forma_pagamento observacoes conciliado referencia_banco is_antecipacao].each do |field|
           if params.key?(field) || params.key?(field.to_s)
             val = params[field] || params[field.to_s]
             if %i[categoria_id cliente_id fornecedor_id conta_bancaria_id socio_id].include?(field)
@@ -174,8 +174,8 @@ module FinSystem
               val = val.to_s.strip.empty? ? nil : BigDecimal(val.to_s.gsub('.', '').gsub(',', '.'))
             elsif field == :data_movimentacao
               val = Date.parse(val)
-            elsif field == :conciliado
-              val = (val == 'true')
+            elsif %i[conciliado is_antecipacao].include?(field)
+              val = (val == 'true' || val == true)
             end
             update_data[field] = val
           end
