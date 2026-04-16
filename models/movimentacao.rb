@@ -166,11 +166,17 @@ module FinSystem
         %i[categoria_id cliente_id fornecedor_id conta_bancaria_id socio_id tipo data_movimentacao
            descricao valor_bruto valor_liquido lucro tipo_operacao numero_documento
            status forma_pagamento observacoes conciliado referencia_banco].each do |field|
-          if params[field]
-            val = params[field]
-            val = BigDecimal(val.to_s.gsub('.', '').gsub(',', '.')) if %i[valor_bruto valor_liquido lucro].include?(field)
-            val = Date.parse(val) if field == :data_movimentacao
-            val = (val == 'true') if field == :conciliado
+          if params.key?(field) || params.key?(field.to_s)
+            val = params[field] || params[field.to_s]
+            if %i[categoria_id cliente_id fornecedor_id conta_bancaria_id socio_id].include?(field)
+              val = val.to_s.strip.empty? ? nil : val.to_i
+            elsif %i[valor_bruto valor_liquido lucro].include?(field)
+              val = val.to_s.strip.empty? ? nil : BigDecimal(val.to_s.gsub('.', '').gsub(',', '.'))
+            elsif field == :data_movimentacao
+              val = Date.parse(val)
+            elsif field == :conciliado
+              val = (val == 'true')
+            end
             update_data[field] = val
           end
         end
