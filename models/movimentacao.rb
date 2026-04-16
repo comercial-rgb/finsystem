@@ -260,10 +260,10 @@ module FinSystem
           Sequel[:movimentacoes][:status] => %w[confirmado conciliado pendente]
         ).exclude(Sequel[:movimentacoes][:tipo_operacao] => 'transferencia')
 
-        receitas_normais = base.where(tipo: 'receita').exclude(is_antecipacao: true)
-        despesas_normais = base.where(tipo: 'despesa').exclude(is_antecipacao: true)
-        antecipacoes_despesa = base.where(is_antecipacao: true, tipo: 'despesa')
-        antecipacoes_receita = base.where(is_antecipacao: true, tipo: 'receita')
+        receitas_normais = base.where(Sequel[:movimentacoes][:tipo] => 'receita').exclude(Sequel[:movimentacoes][:is_antecipacao] => true)
+        despesas_normais = base.where(Sequel[:movimentacoes][:tipo] => 'despesa').exclude(Sequel[:movimentacoes][:is_antecipacao] => true)
+        antecipacoes_despesa = base.where(Sequel[:movimentacoes][:is_antecipacao] => true, Sequel[:movimentacoes][:tipo] => 'despesa')
+        antecipacoes_receita = base.where(Sequel[:movimentacoes][:is_antecipacao] => true, Sequel[:movimentacoes][:tipo] => 'receita')
 
         {
           faturamento_bruto: receitas_normais.sum(:valor_bruto) || 0,

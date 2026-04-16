@@ -25,15 +25,15 @@ module FinSystem
 
         # Base query for the month
         base = db[:movimentacoes].where(
-          data_movimentacao: inicio..fim,
-          status: %w[confirmado conciliado pendente]
-        ).exclude(tipo_operacao: 'transferencia')
-        base = base.where(empresa_id: @empresa_id.to_i) if @empresa_id && !@empresa_id.to_s.empty?
+          Sequel[:movimentacoes][:data_movimentacao] => inicio..fim,
+          Sequel[:movimentacoes][:status] => %w[confirmado conciliado pendente]
+        ).exclude(Sequel[:movimentacoes][:tipo_operacao] => 'transferencia')
+        base = base.where(Sequel[:movimentacoes][:empresa_id] => @empresa_id.to_i) if @empresa_id && !@empresa_id.to_s.empty?
 
         # ========================================
         # ENTRADAS (Receitas)
         # ========================================
-        receitas = base.where(tipo: 'receita').exclude(is_antecipacao: true)
+        receitas = base.where(Sequel[:movimentacoes][:tipo] => 'receita').exclude(Sequel[:movimentacoes][:is_antecipacao] => true)
         @faturamento_bruto = (receitas.sum(:valor_bruto) || 0).to_f
         @receita_real = (receitas.sum(:lucro) || 0).to_f
         @repasse_fornecedores = @faturamento_bruto - @receita_real
@@ -41,8 +41,8 @@ module FinSystem
         # ========================================
         # ANTECIPAÇÕES
         # ========================================
-        antecipacoes_desp = base.where(tipo: 'despesa', is_antecipacao: true)
-        antecipacoes_rec = base.where(tipo: 'receita', is_antecipacao: true)
+        antecipacoes_desp = base.where(Sequel[:movimentacoes][:tipo] => 'despesa', Sequel[:movimentacoes][:is_antecipacao] => true)
+        antecipacoes_rec = base.where(Sequel[:movimentacoes][:tipo] => 'receita', Sequel[:movimentacoes][:is_antecipacao] => true)
         @total_antecipado = (antecipacoes_desp.sum(:valor_bruto) || 0).to_f
         @lucro_antecipacoes = (antecipacoes_rec.sum(:valor_bruto) || 0).to_f
         @qtd_antecipacoes = antecipacoes_desp.count
@@ -50,13 +50,13 @@ module FinSystem
         # ========================================
         # DESPESAS (excluindo antecipações)
         # ========================================
-        despesas = base.where(tipo: 'despesa').exclude(is_antecipacao: true)
+        despesas = base.where(Sequel[:movimentacoes][:tipo] => 'despesa').exclude(Sequel[:movimentacoes][:is_antecipacao] => true)
         @total_despesas = (despesas.sum(:valor_bruto) || 0).to_f
 
         # Por tipo de cobrança
-        @despesas_recorrentes = (despesas.where(tipo_cobranca: 'recorrente').sum(:valor_bruto) || 0).to_f
-        @despesas_parceladas = (despesas.where(tipo_cobranca: 'parcelada').sum(:valor_bruto) || 0).to_f
-        @despesas_unicas = (despesas.where(tipo_cobranca: 'unica').sum(:valor_bruto) || 0).to_f
+        @despesas_recorrentes = (despesas.where(Sequel[:movimentacoes][:tipo_cobranca] => 'recorrente').sum(:valor_bruto) || 0).to_f
+        @despesas_parceladas = (despesas.where(Sequel[:movimentacoes][:tipo_cobranca] => 'parcelada').sum(:valor_bruto) || 0).to_f
+        @despesas_unicas = (despesas.where(Sequel[:movimentacoes][:tipo_cobranca] => 'unica').sum(:valor_bruto) || 0).to_f
         @despesas_sem_tipo = @total_despesas - @despesas_recorrentes - @despesas_parceladas - @despesas_unicas
 
         # Top despesas por categoria
@@ -128,11 +128,11 @@ module FinSystem
           d = hoje << i
           m_inicio = Date.new(d.year, d.month, 1)
           m_fim = (m_inicio >> 1) - 1
-          m_base = db[:movimentacoes].where(data_movimentacao: m_inicio..m_fim, status: %w[confirmado conciliado pendente]).exclude(tipo_operacao: 'transferencia')
-          m_base = m_base.where(empresa_id: @empresa_id.to_i) if @empresa_id && !@empresa_id.to_s.empty?
-          rec = (m_base.where(tipo: 'receita').exclude(is_antecipacao: true).sum(:lucro) || 0).to_f
-          desp = (m_base.where(tipo: 'despesa').exclude(is_antecipacao: true).sum(:valor_bruto) || 0).to_f
-          antecip = (m_base.where(tipo: 'receita', is_antecipacao: true).sum(:valor_bruto) || 0).to_f
+          m_base = db[:movimentacoes].where(Sequel[:movimentacoes][:data_movimentacao] => m_inicio..m_fim, Sequel[:movimentacoes][:status] => %w[confirmado conciliado pendente]).exclude(Sequel[:movimentacoes][:tipo_operacao] => 'transferencia')
+          m_base = m_base.where(Sequel[:movimentacoes][:empresa_id] => @empresa_id.to_i) if @empresa_id && !@empresa_id.to_s.empty?
+          rec = (m_base.where(Sequel[:movimentacoes][:tipo] => 'receita').exclude(Sequel[:movimentacoes][:is_antecipacao] => true).sum(:lucro) || 0).to_f
+          desp = (m_base.where(Sequel[:movimentacoes][:tipo] => 'despesa').exclude(Sequel[:movimentacoes][:is_antecipacao] => true).sum(:valor_bruto) || 0).to_f
+          antecip = (m_base.where(Sequel[:movimentacoes][:tipo] => 'receita', Sequel[:movimentacoes][:is_antecipacao] => true).sum(:valor_bruto) || 0).to_f
           @evolucao.unshift({ mes: "#{nome_mes(d.month)[0..2]}/#{d.year}", receita_real: rec, despesas: desp, antecipacoes: antecip, resultado: rec + antecip - desp })
         end
 
