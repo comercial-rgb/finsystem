@@ -44,6 +44,7 @@ require_relative 'controllers/clientes_controller'
 require_relative 'controllers/fornecedores_controller'
 require_relative 'controllers/cartoes_controller'
 require_relative 'controllers/despesas_controller'
+require_relative 'controllers/fluxo_caixa_controller'
 require_relative 'controllers/api_controller'
 
 module FinSystem
@@ -152,6 +153,7 @@ module FinSystem
     use Controllers::FornecedoresController
     use Controllers::CartoesController
     use Controllers::DespesasController
+    use Controllers::FluxoCaixaController
     use Controllers::ApiController
 
     # ========================================

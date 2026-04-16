@@ -26,21 +26,21 @@ module FinSystem
           @empresa_selecionada = Models::Empresa.find(@empresa_id.to_i)
         else
           # Consolidado de todas as empresas
-          @resumo = { total_receitas: 0, total_despesas: 0, lucro_total: 0,
+          @resumo = { faturamento_bruto: 0, total_receitas: 0, total_despesas: 0,
                       total_antecipacoes: 0, lucro_antecipacoes: 0, qtd_movimentacoes: 0,
                       por_categoria: [], por_banco: [] }
           @empresas.each do |emp|
             r = Models::Movimentacao.resumo_mensal(emp[:id], @mes, @ano)
+            @resumo[:faturamento_bruto] += r[:faturamento_bruto]
             @resumo[:total_receitas] += r[:total_receitas]
             @resumo[:total_despesas] += r[:total_despesas]
-            @resumo[:lucro_total] += r[:lucro_total]
             @resumo[:total_antecipacoes] += r[:total_antecipacoes]
             @resumo[:lucro_antecipacoes] += r[:lucro_antecipacoes]
             @resumo[:qtd_movimentacoes] += r[:qtd_movimentacoes]
           end
         end
 
-        @resultado = @resumo[:total_receitas] - @resumo[:total_despesas]
+        @resultado = @resumo[:total_receitas] + @resumo[:lucro_antecipacoes] - @resumo[:total_despesas]
         @saldos = Models::Movimentacao.saldo_por_conta(@empresa_id)
 
         # Últimas movimentações
@@ -71,8 +71,8 @@ module FinSystem
           fim = (inicio >> 1) - 1
           base = db[:movimentacoes].where(data_movimentacao: inicio..fim, status: %w[confirmado conciliado pendente]).exclude(tipo_operacao: 'transferencia')
           base = base.where(empresa_id: empresa_id.to_i) if empresa_id && !empresa_id.to_s.empty?
-          rec = (base.where(tipo: 'receita').sum(:valor_bruto) || 0).to_f
-          desp = (base.where(tipo: 'despesa').sum(:valor_bruto) || 0).to_f
+          rec = (base.where(tipo: 'receita').exclude(is_antecipacao: true).sum(:lucro) || 0).to_f
+          desp = (base.where(tipo: 'despesa').exclude(is_antecipacao: true).sum(:valor_bruto) || 0).to_f
           resultado.unshift({ mes: "#{nome_mes(d.month)[0..2]}/#{d.year}", receitas: rec, despesas: desp, resultado: rec - desp })
         end
         resultado
@@ -86,9 +86,11 @@ module FinSystem
                   .left_join(:categorias, Sequel[:categorias][:id] => Sequel[:movimentacoes][:categoria_id])
                   .where(Sequel[:movimentacoes][:data_movimentacao] => inicio..fim, Sequel[:movimentacoes][:tipo] => tipo, Sequel[:movimentacoes][:status] => %w[confirmado conciliado pendente])
                   .exclude(Sequel[:movimentacoes][:tipo_operacao] => 'transferencia')
+                  .exclude(Sequel[:movimentacoes][:is_antecipacao] => true)
         query = query.where(Sequel[:movimentacoes][:empresa_id] => empresa_id.to_i) if empresa_id && !empresa_id.to_s.empty?
+        valor_col = tipo == 'receita' ? :lucro : :valor_bruto
         query.group(Sequel[:categorias][:nome], Sequel[:categorias][:cor])
-             .select(Sequel[:categorias][:nome].as(:categoria), Sequel[:categorias][:cor].as(:cor), Sequel.function(:sum, Sequel[:movimentacoes][:valor_bruto]).as(:total))
+             .select(Sequel[:categorias][:nome].as(:categoria), Sequel[:categorias][:cor].as(:cor), Sequel.function(:sum, Sequel[:movimentacoes][valor_col]).as(:total))
              .order(Sequel.desc(:total)).all
       end
 

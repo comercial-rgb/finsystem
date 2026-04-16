@@ -260,12 +260,17 @@ module FinSystem
           Sequel[:movimentacoes][:status] => %w[confirmado conciliado pendente]
         ).exclude(Sequel[:movimentacoes][:tipo_operacao] => 'transferencia')
 
+        receitas_normais = base.where(tipo: 'receita').exclude(is_antecipacao: true)
+        despesas_normais = base.where(tipo: 'despesa').exclude(is_antecipacao: true)
+        antecipacoes_despesa = base.where(is_antecipacao: true, tipo: 'despesa')
+        antecipacoes_receita = base.where(is_antecipacao: true, tipo: 'receita')
+
         {
-          total_receitas: base.where(tipo: 'receita').sum(:valor_bruto) || 0,
-          total_despesas: base.where(tipo: 'despesa').sum(:valor_bruto) || 0,
-          lucro_total: base.sum(:lucro) || 0,
-          total_antecipacoes: base.where(is_antecipacao: true, tipo: 'despesa').sum(:valor_bruto) || 0,
-          lucro_antecipacoes: base.where(is_antecipacao: true, tipo: 'receita').sum(:valor_bruto) || 0,
+          faturamento_bruto: receitas_normais.sum(:valor_bruto) || 0,
+          total_receitas: receitas_normais.sum(:lucro) || 0,
+          total_despesas: despesas_normais.sum(:valor_bruto) || 0,
+          total_antecipacoes: antecipacoes_despesa.sum(:valor_bruto) || 0,
+          lucro_antecipacoes: antecipacoes_receita.sum(:valor_bruto) || 0,
           qtd_movimentacoes: base.count,
           por_categoria: base
             .left_join(:categorias, Sequel[:categorias][:id] => Sequel[:movimentacoes][:categoria_id])
