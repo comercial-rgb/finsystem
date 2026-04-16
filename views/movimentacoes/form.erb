@@ -158,8 +158,8 @@
       </div>
     </div>
 
-    <!-- Tipo de Cobrança (Única / Recorrente / Parcelada) -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+    <!-- Tipo de Cobrança (Única / Recorrente / Parcelada) - Só aparece para Despesa -->
+    <div id="card-tipo-cobranca" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <h2 class="font-semibold text-slate-800 mb-4">Tipo de Cobrança</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
         <label class="cursor-pointer">
@@ -255,34 +255,16 @@
 
         <!-- Cliente (visível para RECEITA) -->
         <div id="campo-cliente">
-          <label class="block text-sm font-medium text-slate-700 mb-1">Cliente (CNPJ/CPF)</label>
-          <div class="flex gap-2">
-            <input type="text" id="cliente_documento" placeholder="00.000.000/0001-00 ou 000.000.000-00"
-                   class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm" onblur="buscarDocumento('cliente')">
-            <button type="button" onclick="buscarDocumento('cliente')" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">🔍</button>
-          </div>
-          <input type="hidden" name="cliente_id" id="cliente_id_hidden">
-          <div id="cliente_info" class="hidden mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-sm">
-            <div class="flex justify-between items-start">
-              <div>
-                <p class="font-medium text-emerald-800" id="cliente_nome_display"></p>
-                <p class="text-emerald-600 text-xs" id="cliente_doc_display"></p>
-              </div>
-              <button type="button" onclick="limparVinculo('cliente')" class="text-red-500 text-xs hover:text-red-700">✕ Remover</button>
-            </div>
-          </div>
-          <div id="cliente_cadastro" class="hidden mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm space-y-2">
-            <p class="font-medium text-amber-800">📋 Cadastrar novo cliente</p>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="text" id="cliente_razao" placeholder="Razão Social *" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
-              <input type="text" id="cliente_fantasia" placeholder="Nome Fantasia" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
-              <input type="email" id="cliente_email" placeholder="Email" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
-              <input type="text" id="cliente_telefone" placeholder="Telefone" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
-              <input type="text" id="cliente_endereco" placeholder="Endereço" class="col-span-2 px-2 py-1.5 border border-amber-300 rounded text-xs">
-              <input type="text" id="cliente_cidade" placeholder="Cidade" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
-              <input type="text" id="cliente_estado" placeholder="UF" class="px-2 py-1.5 border border-amber-300 rounded text-xs">
-            </div>
-            <button type="button" onclick="criarEntidade('cliente')" class="w-full px-3 py-1.5 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700">Cadastrar e Vincular</button>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Cliente</label>
+          <div class="relative">
+            <input type="text" id="busca-cliente" placeholder="Pesquisar cliente por nome ou documento..."
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-1" autocomplete="off">
+            <select name="cliente_id" id="select-cliente" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm" size="1">
+              <option value="">-- Selecione o Cliente --</option>
+              <% @clientes.each do |cli| %>
+                <option value="<%= cli[:id] %>"><%= cli[:nome] %><%= cli[:cnpj_cpf_ein] ? " (#{cli[:cnpj_cpf_ein]})" : '' %></option>
+              <% end %>
+            </select>
           </div>
         </div>
 
@@ -474,6 +456,15 @@ function toggleTipo() {
   document.getElementById('campo-cliente').classList.toggle('hidden', tipo !== 'receita');
   document.getElementById('campo-fornecedor').classList.toggle('hidden', tipo !== 'despesa');
 
+  // Tipo de cobrança: só aparece para despesa
+  document.getElementById('card-tipo-cobranca').classList.toggle('hidden', tipo !== 'despesa');
+  if (tipo !== 'despesa') {
+    var unicaRadio = document.querySelector('input[name="tipo_cobranca"][value="unica"]');
+    if (unicaRadio) unicaRadio.checked = true;
+    document.getElementById('campos-recorrente').classList.add('hidden');
+    document.getElementById('campos-parcelada').classList.add('hidden');
+  }
+
   // Tipo de operação e categorias
   popularTipoOperacao(tipo);
   filtrarCategorias(tipo);
@@ -491,6 +482,13 @@ function toggleAntecipacao() {
   // Mostrar fornecedor, esconder cliente
   document.getElementById('campo-cliente').classList.add('hidden');
   document.getElementById('campo-fornecedor').classList.remove('hidden');
+
+  // Esconder tipo de cobrança para antecipação
+  document.getElementById('card-tipo-cobranca').classList.add('hidden');
+  var unicaRadio = document.querySelector('input[name="tipo_cobranca"][value="unica"]');
+  if (unicaRadio) unicaRadio.checked = true;
+  document.getElementById('campos-recorrente').classList.add('hidden');
+  document.getElementById('campos-parcelada').classList.add('hidden');
 
   // Tipo de operação e categorias
   popularTipoOperacao('antecipacao');
@@ -547,6 +545,50 @@ function calcularAntecipacao() {
 }
 
 // ========================================
+// Pesquisa de Cliente no dropdown
+// ========================================
+function setupBuscaCliente() {
+  var input = document.getElementById('busca-cliente');
+  var select = document.getElementById('select-cliente');
+  if (!input || !select) return;
+
+  // Salvar todas as opções originais
+  var todasOpcoes = [];
+  for (var i = 0; i < select.options.length; i++) {
+    todasOpcoes.push({value: select.options[i].value, text: select.options[i].text});
+  }
+
+  input.addEventListener('input', function() {
+    var filtro = this.value.toLowerCase().trim();
+    select.innerHTML = '';
+
+    todasOpcoes.forEach(function(opt) {
+      if (!filtro || opt.value === '' || opt.text.toLowerCase().indexOf(filtro) !== -1) {
+        var option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.text;
+        select.appendChild(option);
+      }
+    });
+
+    // Expandir select quando pesquisando
+    if (filtro && select.options.length > 1) {
+      select.size = Math.min(select.options.length, 6);
+    } else {
+      select.size = 1;
+    }
+  });
+
+  select.addEventListener('change', function() {
+    if (this.value) {
+      var selectedText = this.options[this.selectedIndex].text;
+      input.value = selectedText;
+      this.size = 1;
+    }
+  });
+}
+
+// ========================================
 // Sócios
 // ========================================
 var sociosPorEmpresa = {};
@@ -597,6 +639,7 @@ function atualizarSocios() {
 document.addEventListener('DOMContentLoaded', function() {
   toggleTipo();
   setupSocioField();
+  setupBuscaCliente();
 
   // Sincronizar valor ao submit
   document.querySelector('form').addEventListener('submit', function() {

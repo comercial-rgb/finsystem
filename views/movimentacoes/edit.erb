@@ -130,6 +130,30 @@
           </select>
         </div>
 
+        <!-- Cliente (visível para Receita) -->
+        <div id="edit-campo-cliente" class="<%= @movimentacao[:tipo] == 'receita' ? '' : 'hidden' %>">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Cliente</label>
+          <input type="text" id="edit-busca-cliente" placeholder="Pesquisar cliente..."
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-1" autocomplete="off">
+          <select name="cliente_id" id="edit-select-cliente" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm" size="1">
+            <option value="">-- Selecione o Cliente --</option>
+            <% @clientes.each do |cli| %>
+              <option value="<%= cli[:id] %>" <%= @movimentacao[:cliente_id] == cli[:id] ? 'selected' : '' %>><%= cli[:nome] %><%= cli[:cnpj_cpf_ein] ? " (#{cli[:cnpj_cpf_ein]})" : '' %></option>
+            <% end %>
+          </select>
+        </div>
+
+        <!-- Fornecedor (visível para Despesa) -->
+        <div id="edit-campo-fornecedor" class="<%= @movimentacao[:tipo] == 'despesa' ? '' : 'hidden' %>">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Fornecedor</label>
+          <select name="fornecedor_id" id="edit-select-fornecedor" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+            <option value="">-- Selecione --</option>
+            <% @fornecedores.each do |f| %>
+              <option value="<%= f[:id] %>" <%= @movimentacao[:fornecedor_id] == f[:id] ? 'selected' : '' %>><%= f[:nome] %><%= f[:cnpj_cpf_ein] ? " (#{f[:cnpj_cpf_ein]})" : '' %></option>
+            <% end %>
+          </select>
+        </div>
+
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Nº Documento</label>
           <input type="text" name="numero_documento" value="<%= @movimentacao[:numero_documento] %>" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
@@ -298,6 +322,10 @@ function toggleEditTipo() {
   document.getElementById('edit-campos-receita').classList.toggle('hidden', tipo !== 'receita');
   document.getElementById('edit-campos-despesa').classList.toggle('hidden', tipo !== 'despesa');
 
+  // Cliente vs Fornecedor
+  document.getElementById('edit-campo-cliente').classList.toggle('hidden', tipo !== 'receita');
+  document.getElementById('edit-campo-fornecedor').classList.toggle('hidden', tipo !== 'despesa');
+
   // Sincronizar hidden fields
   syncEditValor();
 
@@ -358,6 +386,39 @@ document.addEventListener('DOMContentLoaded', function() {
   var tipoOperacaoAtual = '<%= @movimentacao[:tipo_operacao] || "" %>';
   popularEditTipoOperacao(tipo, tipoOperacaoAtual);
   filtrarEditCategorias(tipo);
+
+  // Busca de cliente
+  var inputCli = document.getElementById('edit-busca-cliente');
+  var selectCli = document.getElementById('edit-select-cliente');
+  if (inputCli && selectCli) {
+    var todasOpcoesCliente = [];
+    for (var i = 0; i < selectCli.options.length; i++) {
+      todasOpcoesCliente.push({value: selectCli.options[i].value, text: selectCli.options[i].text, selected: selectCli.options[i].selected});
+    }
+    // Preencher input com cliente selecionado
+    var selIdx = selectCli.selectedIndex;
+    if (selIdx > 0) inputCli.value = selectCli.options[selIdx].text;
+
+    inputCli.addEventListener('input', function() {
+      var filtro = this.value.toLowerCase().trim();
+      selectCli.innerHTML = '';
+      todasOpcoesCliente.forEach(function(opt) {
+        if (!filtro || opt.value === '' || opt.text.toLowerCase().indexOf(filtro) !== -1) {
+          var option = document.createElement('option');
+          option.value = opt.value;
+          option.textContent = opt.text;
+          selectCli.appendChild(option);
+        }
+      });
+      selectCli.size = (filtro && selectCli.options.length > 1) ? Math.min(selectCli.options.length, 6) : 1;
+    });
+    selectCli.addEventListener('change', function() {
+      if (this.value) {
+        inputCli.value = this.options[this.selectedIndex].text;
+        this.size = 1;
+      }
+    });
+  }
 });
 </script>
 <!-- views/movimentacoes/edit.erb - Editar movimentação -->
