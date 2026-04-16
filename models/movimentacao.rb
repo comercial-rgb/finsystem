@@ -85,9 +85,9 @@ module FinSystem
           forma_pagamento: params[:forma_pagamento],
           observacoes: params[:observacoes],
           is_antecipacao: params[:is_antecipacao] == 'true' || params[:is_antecipacao] == true,
-          valor_antecipado: params[:valor_antecipado] ? BigDecimal(params[:valor_antecipado].to_s.gsub('.', '').gsub(',', '.')) : nil,
-          taxa_antecipacao: params[:taxa_antecipacao] ? BigDecimal(params[:taxa_antecipacao].to_s.gsub('.', '').gsub(',', '.')) : nil,
-          valor_original_faturamento: params[:valor_original_faturamento] ? BigDecimal(params[:valor_original_faturamento].to_s.gsub('.', '').gsub(',', '.')) : nil,
+          valor_antecipado: params[:valor_antecipado].to_s.strip.empty? ? nil : BigDecimal(params[:valor_antecipado].to_s.gsub('.', '').gsub(',', '.')),
+          taxa_antecipacao: params[:taxa_antecipacao].to_s.strip.empty? ? nil : BigDecimal(params[:taxa_antecipacao].to_s.gsub('.', '').gsub(',', '.')),
+          valor_original_faturamento: params[:valor_original_faturamento].to_s.strip.empty? ? nil : BigDecimal(params[:valor_original_faturamento].to_s.gsub('.', '').gsub(',', '.')),
           referencia_banco: params[:referencia_banco],
           tipo_cobranca: tipo_cobranca,
           total_parcelas: total_parcelas,
@@ -165,12 +165,13 @@ module FinSystem
         update_data = {}
         %i[categoria_id cliente_id fornecedor_id conta_bancaria_id socio_id tipo data_movimentacao
            descricao valor_bruto valor_liquido lucro tipo_operacao numero_documento
-           status forma_pagamento observacoes conciliado referencia_banco is_antecipacao].each do |field|
+           status forma_pagamento observacoes conciliado referencia_banco is_antecipacao
+           valor_antecipado taxa_antecipacao valor_original_faturamento].each do |field|
           if params.key?(field) || params.key?(field.to_s)
             val = params[field] || params[field.to_s]
             if %i[categoria_id cliente_id fornecedor_id conta_bancaria_id socio_id].include?(field)
               val = val.to_s.strip.empty? ? nil : val.to_i
-            elsif %i[valor_bruto valor_liquido lucro].include?(field)
+            elsif %i[valor_bruto valor_liquido lucro valor_antecipado taxa_antecipacao valor_original_faturamento].include?(field)
               val = val.to_s.strip.empty? ? nil : BigDecimal(val.to_s.gsub('.', '').gsub(',', '.'))
             elsif field == :data_movimentacao
               val = Date.parse(val)
