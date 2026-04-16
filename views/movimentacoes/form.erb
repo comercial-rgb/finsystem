@@ -98,22 +98,36 @@
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <h2 class="font-semibold text-slate-800 mb-4">Valores</h2>
 
-      <!-- Campos normais -->
-      <div id="campos-normais" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Campos para RECEITA -->
+      <div id="campos-receita" class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Valor <span id="label-valor">(Bruto)</span> *</label>
-          <input type="text" name="valor_bruto" required placeholder="0,00"
-                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm moeda-br" onkeyup="calcularLucro()">
+          <label class="block text-sm font-medium text-slate-700 mb-1">Valor Bruto *</label>
+          <input type="text" name="valor_bruto" id="valor_bruto_receita" required placeholder="0,00"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm moeda-br" onkeyup="calcularLucroReceita()">
         </div>
-        <div id="campo-valor-liquido">
-          <label class="block text-sm font-medium text-slate-700 mb-1">Valor Líquido</label>
-          <input type="text" name="valor_liquido" placeholder="0,00"
-                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm moeda-br" onkeyup="calcularLucro()">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">% Lucro</label>
+          <div class="relative">
+            <input type="number" id="percentual_lucro" step="0.01" min="0" max="100" placeholder="10"
+                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm pr-8" onkeyup="calcularLucroReceita()" onchange="calcularLucroReceita()">
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">%</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Percentual sobre o valor bruto</p>
         </div>
-        <div id="campo-lucro-container">
+        <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Lucro da Operação</label>
-          <input type="text" name="lucro" id="campo-lucro" placeholder="0,00"
-                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-emerald-50 moeda-br">
+          <input type="text" name="lucro" id="campo-lucro-receita" readonly placeholder="0,00"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-emerald-50 font-bold text-emerald-700 moeda-br">
+          <input type="hidden" name="valor_liquido" id="valor_liquido_hidden">
+        </div>
+      </div>
+
+      <!-- Campos para DESPESA -->
+      <div id="campos-despesa" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Valor *</label>
+          <input type="text" id="valor_bruto_despesa" placeholder="0,00"
+                 class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm moeda-br">
         </div>
       </div>
 
@@ -206,18 +220,18 @@
       <h2 class="font-semibold text-slate-800 mb-4">Categoria e Vínculo</h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div id="cat-receita">
+        <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Categoria</label>
-          <select name="categoria_id" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+          <select name="categoria_id" id="select-categoria" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
             <option value="">-- Selecione --</option>
             <optgroup label="📈 Receitas" id="opt-receitas">
               <% @categorias_receita.each do |c| %>
-                <option value="<%= c[:id] %>"><%= c[:nome] %></option>
+                <option value="<%= c[:id] %>" data-tipo="receita"><%= c[:nome] %></option>
               <% end %>
             </optgroup>
             <optgroup label="📉 Despesas" id="opt-despesas">
               <% @categorias_despesa.each do |c| %>
-                <option value="<%= c[:id] %>"><%= c[:nome] %></option>
+                <option value="<%= c[:id] %>" data-tipo="despesa"><%= c[:nome] %></option>
               <% end %>
             </optgroup>
           </select>
@@ -225,46 +239,8 @@
 
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Tipo de Operação</label>
-          <select name="tipo_operacao" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+          <select name="tipo_operacao" id="select-tipo-operacao" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
             <option value="">-- Selecione --</option>
-            <optgroup label="💰 Receitas">
-              <option value="faturamento">Faturamento de Cliente</option>
-              <option value="comissao">Comissão / Taxa de Serviço</option>
-            </optgroup>
-            <optgroup label="📤 Repasses e Fornecedores">
-              <option value="repasse">Repasse a Fornecedor</option>
-              <option value="antecipacao">Antecipação a Fornecedor</option>
-            </optgroup>
-            <optgroup label="🏢 Despesas Operacionais">
-              <option value="aluguel">Aluguel</option>
-              <option value="utilidade">Utilidades (Água/Luz/Internet/Tel)</option>
-              <option value="servidor">Servidores / Hosting / Cloud</option>
-              <option value="software">Software / Licenças / SaaS</option>
-              <option value="ia">Inteligência Artificial (APIs)</option>
-              <option value="material">Material / Suprimentos</option>
-              <option value="marketing">Marketing / Publicidade</option>
-              <option value="viagem">Viagem / Deslocamento</option>
-            </optgroup>
-            <optgroup label="👥 Pessoal e Profissional">
-              <option value="salario">Salário / Folha de Pagamento</option>
-              <option value="prolabore">Pró-labore</option>
-              <option value="juridico">Jurídico / Advocacia</option>
-              <option value="contabilidade">Contabilidade</option>
-              <option value="consultoria">Consultoria</option>
-            </optgroup>
-            <optgroup label="🏛️ Governo e Financeiro">
-              <option value="imposto">Imposto / Taxa Gov.</option>
-              <option value="boleto">Boleto - Geral</option>
-              <option value="taxa_bancaria">Taxa Bancária</option>
-              <option value="seguro">Seguro</option>
-            </optgroup>
-            <optgroup label="� Sócios">
-              <option value="retirada_socio">Retirada de Sócio</option>
-              <option value="pagamento_socio">Pagamento com Dinheiro da Empresa</option>
-            </optgroup>
-            <optgroup label="📋 Outros">
-              <option value="outros">Outros</option>
-            </optgroup>
           </select>
         </div>
 
@@ -277,6 +253,7 @@
           <p class="text-xs text-slate-400 mt-1">Selecione o sócio que está realizando a retirada ou utilizando dinheiro da empresa</p>
         </div>
 
+        <!-- Cliente (visível para RECEITA) -->
         <div id="campo-cliente">
           <label class="block text-sm font-medium text-slate-700 mb-1">Cliente (CNPJ/CPF)</label>
           <div class="flex gap-2">
@@ -309,7 +286,8 @@
           </div>
         </div>
 
-        <div id="campo-fornecedor">
+        <!-- Fornecedor (visível para DESPESA e ANTECIPAÇÃO) -->
+        <div id="campo-fornecedor" class="hidden">
           <label class="block text-sm font-medium text-slate-700 mb-1">Fornecedor (CNPJ/CPF)</label>
           <div class="flex gap-2">
             <input type="text" id="fornecedor_documento" placeholder="00.000.000/0001-00 ou 000.000.000-00"
@@ -389,59 +367,188 @@
 </div>
 
 <script>
+// ========================================
+// Opções de Tipo de Operação por tipo
+// ========================================
+var tipoOperacaoOpcoes = {
+  receita: [
+    { group: '💰 Receitas', options: [
+      { value: 'faturamento', label: 'Faturamento de Cliente' },
+      { value: 'comissao', label: 'Comissão / Taxa de Serviço' },
+      { value: 'outros_receita', label: 'Outras Receitas' }
+    ]}
+  ],
+  despesa: [
+    { group: '📤 Repasses e Fornecedores', options: [
+      { value: 'repasse', label: 'Repasse a Fornecedor' }
+    ]},
+    { group: '🏢 Despesas Operacionais', options: [
+      { value: 'aluguel', label: 'Aluguel' },
+      { value: 'utilidade', label: 'Utilidades (Água/Luz/Internet/Tel)' },
+      { value: 'servidor', label: 'Servidores / Hosting / Cloud' },
+      { value: 'software', label: 'Software / Licenças / SaaS' },
+      { value: 'ia', label: 'Inteligência Artificial (APIs)' },
+      { value: 'material', label: 'Material / Suprimentos' },
+      { value: 'marketing', label: 'Marketing / Publicidade' },
+      { value: 'viagem', label: 'Viagem / Deslocamento' }
+    ]},
+    { group: '👥 Pessoal e Profissional', options: [
+      { value: 'salario', label: 'Salário / Folha de Pagamento' },
+      { value: 'prolabore', label: 'Pró-labore' },
+      { value: 'juridico', label: 'Jurídico / Advocacia' },
+      { value: 'contabilidade', label: 'Contabilidade' },
+      { value: 'consultoria', label: 'Consultoria' }
+    ]},
+    { group: '🏛️ Governo e Financeiro', options: [
+      { value: 'imposto', label: 'Imposto / Taxa Gov.' },
+      { value: 'boleto', label: 'Boleto - Geral' },
+      { value: 'taxa_bancaria', label: 'Taxa Bancária' },
+      { value: 'seguro', label: 'Seguro' }
+    ]},
+    { group: '👤 Sócios', options: [
+      { value: 'retirada_socio', label: 'Retirada de Sócio' },
+      { value: 'pagamento_socio', label: 'Pagamento com Dinheiro da Empresa' }
+    ]},
+    { group: '📋 Outros', options: [
+      { value: 'outros', label: 'Outros' }
+    ]}
+  ],
+  antecipacao: [
+    { group: '⚡ Antecipação', options: [
+      { value: 'antecipacao', label: 'Antecipação a Fornecedor' }
+    ]}
+  ]
+};
+
+function popularTipoOperacao(tipo) {
+  var select = document.getElementById('select-tipo-operacao');
+  select.innerHTML = '<option value="">-- Selecione --</option>';
+  var opcoes = tipoOperacaoOpcoes[tipo] || [];
+  opcoes.forEach(function(grupo) {
+    var optgroup = document.createElement('optgroup');
+    optgroup.label = grupo.group;
+    grupo.options.forEach(function(opt) {
+      var option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.label;
+      optgroup.appendChild(option);
+    });
+    select.appendChild(optgroup);
+  });
+}
+
+function filtrarCategorias(tipo) {
+  var optReceitas = document.getElementById('opt-receitas');
+  var optDespesas = document.getElementById('opt-despesas');
+  if (tipo === 'receita') {
+    optReceitas.style.display = '';
+    optDespesas.style.display = 'none';
+  } else {
+    optReceitas.style.display = 'none';
+    optDespesas.style.display = '';
+  }
+  document.getElementById('select-categoria').value = '';
+}
+
+// ========================================
+// Toggle por tipo selecionado
+// ========================================
 function toggleTipo() {
   document.getElementById('is_antecipacao').value = 'false';
-  document.getElementById('campos-antecipacao').classList.add('hidden');
-  document.getElementById('campos-normais').classList.remove('hidden');
+  var antRadio = document.querySelector('input[name="is_antecipacao_radio"]');
+  if (antRadio) antRadio.checked = false;
 
-  // Verifica se é despesa para esconder campos de receita
-  const tipoSelecionado = document.querySelector('input[name="tipo"]:checked');
-  if (tipoSelecionado && tipoSelecionado.value === 'despesa') {
-    document.getElementById('campo-valor-liquido').classList.add('hidden');
-    document.getElementById('campo-lucro-container').classList.add('hidden');
-    document.getElementById('label-valor').textContent = '';
-  } else {
-    document.getElementById('campo-valor-liquido').classList.remove('hidden');
-    document.getElementById('campo-lucro-container').classList.remove('hidden');
-    document.getElementById('label-valor').textContent = '(Bruto)';
-  }
+  var tipoSelecionado = document.querySelector('input[name="tipo"]:checked');
+  if (!tipoSelecionado) return;
+  var tipo = tipoSelecionado.value;
+
+  // Valores: mostrar campos corretos
+  document.getElementById('campos-receita').classList.toggle('hidden', tipo !== 'receita');
+  document.getElementById('campos-despesa').classList.toggle('hidden', tipo !== 'despesa');
+  document.getElementById('campos-antecipacao').classList.add('hidden');
+
+  // Sincronizar valor_bruto entre campos
+  syncValorBruto(tipo);
+
+  // Cliente vs Fornecedor
+  document.getElementById('campo-cliente').classList.toggle('hidden', tipo !== 'receita');
+  document.getElementById('campo-fornecedor').classList.toggle('hidden', tipo !== 'despesa');
+
+  // Tipo de operação e categorias
+  popularTipoOperacao(tipo);
+  filtrarCategorias(tipo);
 }
 
 function toggleAntecipacao() {
   document.getElementById('is_antecipacao').value = 'true';
-  document.getElementById('campos-antecipacao').classList.remove('hidden');
-  document.getElementById('campos-normais').classList.add('hidden');
   document.querySelectorAll('input[name="tipo"]').forEach(r => r.checked = false);
+
+  // Valores
+  document.getElementById('campos-receita').classList.add('hidden');
+  document.getElementById('campos-despesa').classList.add('hidden');
+  document.getElementById('campos-antecipacao').classList.remove('hidden');
+
+  // Mostrar fornecedor, esconder cliente
+  document.getElementById('campo-cliente').classList.add('hidden');
+  document.getElementById('campo-fornecedor').classList.remove('hidden');
+
+  // Tipo de operação e categorias
+  popularTipoOperacao('antecipacao');
+  filtrarCategorias('despesa');
 }
 
 function toggleCobranca() {
-  const tipo = document.querySelector('input[name="tipo_cobranca"]:checked')?.value;
+  var tipo = document.querySelector('input[name="tipo_cobranca"]:checked')?.value;
   document.getElementById('campos-recorrente').classList.toggle('hidden', tipo !== 'recorrente');
   document.getElementById('campos-parcelada').classList.toggle('hidden', tipo !== 'parcelada');
 }
 
-function calcularAntecipacao() {
-  const original = parseMoedaBR(document.getElementById('ant-original').value);
-  const enviado = parseMoedaBR(document.getElementById('ant-enviado').value);
-  const taxa = original - enviado;
-  document.getElementById('ant-taxa').value = taxa.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-}
-
-function calcularLucro() {
-  const bruto = parseMoedaBR(document.querySelector('[name="valor_bruto"]').value);
-  const liquido = parseMoedaBR(document.querySelector('[name="valor_liquido"]').value);
-  if (liquido > 0 && bruto > 0) {
-    document.getElementById('campo-lucro').value = (bruto - liquido).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+// ========================================
+// Sincronizar valor_bruto entre campos receita/despesa
+// ========================================
+function syncValorBruto(tipo) {
+  var receitaInput = document.getElementById('valor_bruto_receita');
+  var despesaInput = document.getElementById('valor_bruto_despesa');
+  if (tipo === 'receita') {
+    receitaInput.name = 'valor_bruto';
+    despesaInput.removeAttribute('name');
+  } else {
+    despesaInput.name = 'valor_bruto';
+    receitaInput.removeAttribute('name');
   }
 }
 
-// Executar ao carregar para aplicar o estado inicial
-document.addEventListener('DOMContentLoaded', function() {
-  toggleTipo();
-  setupSocioField();
-});
+// ========================================
+// Cálculo de lucro por percentual (Receita)
+// ========================================
+function calcularLucroReceita() {
+  var bruto = parseMoedaBR(document.getElementById('valor_bruto_receita').value);
+  var percentual = parseFloat(document.getElementById('percentual_lucro').value) || 0;
+  if (bruto > 0 && percentual > 0) {
+    var lucro = bruto * (percentual / 100);
+    var liquido = bruto - lucro;
+    document.getElementById('campo-lucro-receita').value = formatarMoedaBR(lucro);
+    document.getElementById('valor_liquido_hidden').value = formatarMoedaBR(liquido);
+  } else {
+    document.getElementById('campo-lucro-receita').value = '';
+    document.getElementById('valor_liquido_hidden').value = '';
+  }
+}
 
-// Dados dos sócios por empresa
+function formatarMoedaBR(valor) {
+  return valor.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+}
+
+function calcularAntecipacao() {
+  var original = parseMoedaBR(document.getElementById('ant-original').value);
+  var enviado = parseMoedaBR(document.getElementById('ant-enviado').value);
+  var taxa = original - enviado;
+  document.getElementById('ant-taxa').value = formatarMoedaBR(taxa);
+}
+
+// ========================================
+// Sócios
+// ========================================
 var sociosPorEmpresa = {};
 <% @socios.each do |s| %>
 sociosPorEmpresa[<%= s[:empresa_id] %>] = sociosPorEmpresa[<%= s[:empresa_id] %>] || [];
@@ -449,7 +556,7 @@ sociosPorEmpresa[<%= s[:empresa_id] %>].push({id: <%= s[:id] %>, nome: '<%= s[:n
 <% end %>
 
 function setupSocioField() {
-  var tipoOp = document.querySelector('[name="tipo_operacao"]');
+  var tipoOp = document.getElementById('select-tipo-operacao');
   if (tipoOp) {
     tipoOp.addEventListener('change', function() {
       var val = this.value;
@@ -483,4 +590,26 @@ function atualizarSocios() {
     select.appendChild(opt);
   });
 }
+
+// ========================================
+// Inicialização
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+  toggleTipo();
+  setupSocioField();
+
+  // Sincronizar valor ao submit
+  document.querySelector('form').addEventListener('submit', function() {
+    var tipo = document.querySelector('input[name="tipo"]:checked');
+    if (tipo && tipo.value === 'despesa') {
+      // Copiar valor do campo despesa para o name=valor_bruto
+      // (já está com name correto via syncValorBruto)
+    }
+  });
+
+  // Atualizar valor ao digitar no campo de despesa
+  document.getElementById('valor_bruto_despesa').addEventListener('keyup', function() {
+    // Campo de despesa já tem name=valor_bruto quando ativo
+  });
+});
 </script>
