@@ -1,0 +1,1386 @@
+<!-- views/gerencia/index.erb - Painel de Gerência Completo -->
+
+<% aba = @aba || 'financeiro' %>
+
+<!-- Header -->
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Painel de Gerência</h1>
+    <p class="text-slate-500 text-sm mt-1">Controle completo de operações, financeiro, comercial e suporte</p>
+  </div>
+</div>
+
+<!-- KPI Cards Resumo Geral -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+      </div>
+      <span class="text-xs font-semibold text-slate-500 uppercase">Recebimentos</span>
+    </div>
+    <p class="text-lg font-bold text-emerald-600"><%= fmt_moeda(@resumo[:financeiro][:total_recebimentos]) %></p>
+  </div>
+
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <span class="text-xs font-semibold text-slate-500 uppercase">NF Abertas</span>
+    </div>
+    <p class="text-lg font-bold text-amber-600"><%= @resumo[:financeiro][:nf_clientes_abertas] + @resumo[:financeiro][:nf_fornecedores_abertas] %></p>
+  </div>
+
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>
+      <span class="text-xs font-semibold text-slate-500 uppercase">Parceiros</span>
+    </div>
+    <p class="text-lg font-bold text-blue-600"><%= @resumo[:parceiros][:credenciados] %>/<%= @resumo[:parceiros][:total] %></p>
+  </div>
+
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+      </div>
+      <span class="text-xs font-semibold text-slate-500 uppercase">Comercial</span>
+    </div>
+    <p class="text-lg font-bold text-indigo-600"><%= @resumo[:comercial][:sucesso] %>/<%= @resumo[:comercial][:total] %></p>
+  </div>
+
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+      </div>
+      <span class="text-xs font-semibold text-slate-500 uppercase">Licitações</span>
+    </div>
+    <p class="text-lg font-bold text-purple-600"><%= @resumo[:licitacoes][:ganhas] %>/<%= @resumo[:licitacoes][:total] %></p>
+  </div>
+
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center">
+        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <span class="text-xs font-semibold text-slate-500 uppercase">Chamados</span>
+    </div>
+    <p class="text-lg font-bold text-rose-600"><%= @resumo[:operacoes][:chamados_abertos] %></p>
+  </div>
+</div>
+
+<!-- Tabs de Navegação -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 mb-6">
+  <div class="border-b border-slate-200 overflow-x-auto">
+    <nav class="flex -mb-px min-w-max" id="gerencia-tabs">
+      <a href="/gerencia?aba=financeiro" class="px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap <%= aba == 'financeiro' ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %>">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1"/></svg>
+          Financeiro
+        </span>
+      </a>
+      <a href="/gerencia?aba=parceiros" class="px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap <%= aba == 'parceiros' ? 'border-blue-500 text-blue-600 bg-blue-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %>">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Credenciamento Parceiros
+        </span>
+      </a>
+      <a href="/gerencia?aba=comercial" class="px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap <%= aba == 'comercial' ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %>">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          Comercial / Marketing
+        </span>
+      </a>
+      <a href="/gerencia?aba=redes" class="px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap <%= aba == 'redes' ? 'border-pink-500 text-pink-600 bg-pink-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %>">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
+          Redes Sociais
+        </span>
+      </a>
+      <a href="/gerencia?aba=licitacoes" class="px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap <%= aba == 'licitacoes' ? 'border-purple-500 text-purple-600 bg-purple-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %>">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/></svg>
+          Licitações
+        </span>
+      </a>
+      <a href="/gerencia?aba=operacoes" class="px-5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap <%= aba == 'operacoes' ? 'border-rose-500 text-rose-600 bg-rose-50/50' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' %>">
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Operações e Suporte
+        </span>
+      </a>
+    </nav>
+  </div>
+
+  <div class="p-6">
+    <!-- ==============================
+         ABA: FINANCEIRO
+    ============================== -->
+    <% if aba == 'financeiro' %>
+
+      <!-- RECEBIMENTOS por Frente -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-800">Recebimentos por Frente</h2>
+          <button onclick="document.getElementById('form-recebimento').classList.toggle('hidden')" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">
+            + Novo Recebimento
+          </button>
+        </div>
+
+        <!-- Form Novo Recebimento -->
+        <div id="form-recebimento" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+          <form method="POST" action="/gerencia/recebimentos">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Frente *</label>
+                <select name="frente" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+                  <option value="">Selecione...</option>
+                  <option value="manutencao">Manutenção</option>
+                  <option value="rastreamento">Rastreamento</option>
+                  <option value="combustivel">Combustível</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
+                <input type="text" name="descricao" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Valor (R$) *</label>
+                <input type="text" name="valor" required placeholder="0,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Data Recebimento</label>
+                <input type="date" name="data_recebimento" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+              </div>
+              <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">Salvar</button>
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Observações</label>
+              <input type="text" name="observacoes" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+            </div>
+          </form>
+        </div>
+
+        <!-- Resumo por Frente -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <% ['manutencao', 'rastreamento', 'combustivel'].each do |frente| %>
+            <% total = @recebimentos.select { |r| r[:frente] == frente }.sum { |r| r[:valor].to_f } %>
+            <% qtd = @recebimentos.count { |r| r[:frente] == frente } %>
+            <% cor = frente == 'manutencao' ? 'cyan' : (frente == 'rastreamento' ? 'violet' : 'orange') %>
+            <% label = frente == 'manutencao' ? 'Manutenção' : (frente == 'rastreamento' ? 'Rastreamento' : 'Combustível') %>
+            <div class="bg-<%= cor %>-50 rounded-lg p-4 border border-<%= cor %>-200">
+              <p class="text-xs font-semibold text-<%= cor %>-600 uppercase mb-1"><%= label %></p>
+              <p class="text-xl font-bold text-<%= cor %>-700"><%= fmt_moeda(total) %></p>
+              <p class="text-xs text-<%= cor %>-500 mt-1"><%= qtd %> registro(s)</p>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Tabela Recebimentos -->
+        <% if @recebimentos.any? %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-slate-50 text-left">
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Frente</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Descrição</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Valor</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Data</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-100">
+                <% @recebimentos.each do |r| %>
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3">
+                      <% badge_cor = r[:frente] == 'manutencao' ? 'cyan' : (r[:frente] == 'rastreamento' ? 'violet' : 'orange') %>
+                      <% badge_label = r[:frente] == 'manutencao' ? 'Manutenção' : (r[:frente] == 'rastreamento' ? 'Rastreamento' : 'Combustível') %>
+                      <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= badge_cor %>-100 text-<%= badge_cor %>-800"><%= badge_label %></span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-700"><%= r[:descricao] %></td>
+                    <td class="px-4 py-3 font-semibold text-emerald-600"><%= fmt_moeda(r[:valor]) %></td>
+                    <td class="px-4 py-3 text-slate-500"><%= r[:data_recebimento] ? fmt_data(r[:data_recebimento]) : '-' %></td>
+                    <td class="px-4 py-3">
+                      <form method="POST" action="/gerencia/recebimentos/<%= r[:id] %>" onsubmit="return confirm('Excluir este recebimento?')">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-slate-400 text-sm text-center py-6">Nenhum recebimento registrado.</p>
+        <% end %>
+      </div>
+
+      <hr class="my-8 border-slate-200">
+
+      <!-- NF EM ABERTO - CLIENTES -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-800">Notas Fiscais em Aberto — Clientes</h2>
+          <button onclick="document.getElementById('form-nf-cliente').classList.toggle('hidden')" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition">
+            + Nova NF Cliente
+          </button>
+        </div>
+
+        <div id="form-nf-cliente" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+          <form method="POST" action="/gerencia/nf-clientes">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Cliente *</label>
+                <input type="text" name="nome_cliente" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Centro de Custo</label>
+                <input type="text" name="centro_custo" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Período Apurado</label>
+                <input type="text" name="periodo_apurado" placeholder="Ex: Mar/2026" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Dt. Vencimento</label>
+                <input type="date" name="data_vencimento" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Bruto (R$)</label>
+                <input type="text" name="valor_bruto" placeholder="0,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Líquido (R$)</label>
+                <input type="text" name="valor_liquido" placeholder="0,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+            </div>
+            <div class="mt-3 flex justify-end">
+              <button type="submit" class="px-6 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition">Salvar NF</button>
+            </div>
+          </form>
+        </div>
+
+        <% nf_abertas_cli = @nf_clientes.select { |n| n[:status] == 'aberta' } %>
+        <% if nf_abertas_cli.any? %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-slate-50 text-left">
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Cliente</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Centro Custo</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Período</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Vencimento</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">V. Bruto</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">V. Líquido</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-100">
+                <% nf_abertas_cli.each do |nf| %>
+                  <% vencida = nf[:data_vencimento] && nf[:data_vencimento] < Date.today %>
+                  <tr class="hover:bg-slate-50 <%= vencida ? 'bg-red-50' : '' %>">
+                    <td class="px-4 py-3 font-medium text-slate-800"><%= nf[:nome_cliente] %></td>
+                    <td class="px-4 py-3 text-slate-600"><%= nf[:centro_custo] || '-' %></td>
+                    <td class="px-4 py-3 text-slate-600"><%= nf[:periodo_apurado] || '-' %></td>
+                    <td class="px-4 py-3 <%= vencida ? 'text-red-600 font-semibold' : 'text-slate-600' %>"><%= nf[:data_vencimento] ? fmt_data(nf[:data_vencimento]) : '-' %></td>
+                    <td class="px-4 py-3 font-semibold text-slate-700"><%= fmt_moeda(nf[:valor_bruto]) %></td>
+                    <td class="px-4 py-3 font-semibold text-emerald-600"><%= fmt_moeda(nf[:valor_liquido]) %></td>
+                    <td class="px-4 py-3 flex gap-2">
+                      <form method="POST" action="/gerencia/nf-clientes/<%= nf[:id] %>/pagar" class="inline">
+                        <button type="submit" class="text-emerald-600 hover:text-emerald-800 text-xs font-medium" title="Marcar como paga">Pagar</button>
+                      </form>
+                      <form method="POST" action="/gerencia/nf-clientes/<%= nf[:id] %>" onsubmit="return confirm('Excluir esta NF?')" class="inline">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-slate-400 text-sm text-center py-6">Nenhuma NF de cliente em aberto.</p>
+        <% end %>
+      </div>
+
+      <hr class="my-8 border-slate-200">
+
+      <!-- NF EM ABERTO - FORNECEDORES -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-800">Notas Fiscais em Aberto — Fornecedores (Faturas)</h2>
+          <button onclick="document.getElementById('form-nf-forn').classList.toggle('hidden')" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition">
+            + Nova Fatura Fornecedor
+          </button>
+        </div>
+
+        <div id="form-nf-forn" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+          <form method="POST" action="/gerencia/nf-fornecedores">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">N° da Fatura</label>
+                <input type="text" name="numero_fatura" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Cliente/Centro Custo</label>
+                <input type="text" name="cliente_centro_custo" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Período Apurado</label>
+                <input type="text" name="periodo_apurado" placeholder="Ex: Mar/2026" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Vencimento</label>
+                <input type="date" name="vencimento" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Bruto (R$)</label>
+                <input type="text" name="valor_bruto" placeholder="0,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Líquido (R$)</label>
+                <input type="text" name="valor_liquido" placeholder="0,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+            </div>
+            <div class="mt-3 flex justify-end">
+              <button type="submit" class="px-6 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition">Salvar Fatura</button>
+            </div>
+          </form>
+        </div>
+
+        <% nf_abertas_forn = @nf_fornecedores.select { |n| n[:status] == 'aberta' } %>
+        <% if nf_abertas_forn.any? %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-slate-50 text-left">
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">N° Fatura</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Cliente/CC</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Período</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Vencimento</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">V. Bruto</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">V. Líquido</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-100">
+                <% nf_abertas_forn.each do |nf| %>
+                  <% vencida = nf[:vencimento] && nf[:vencimento] < Date.today %>
+                  <tr class="hover:bg-slate-50 <%= vencida ? 'bg-red-50' : '' %>">
+                    <td class="px-4 py-3 font-medium text-slate-800"><%= nf[:numero_fatura] || '-' %></td>
+                    <td class="px-4 py-3 text-slate-600"><%= nf[:cliente_centro_custo] || '-' %></td>
+                    <td class="px-4 py-3 text-slate-600"><%= nf[:periodo_apurado] || '-' %></td>
+                    <td class="px-4 py-3 <%= vencida ? 'text-red-600 font-semibold' : 'text-slate-600' %>"><%= nf[:vencimento] ? fmt_data(nf[:vencimento]) : '-' %></td>
+                    <td class="px-4 py-3 font-semibold text-slate-700"><%= fmt_moeda(nf[:valor_bruto]) %></td>
+                    <td class="px-4 py-3 font-semibold text-emerald-600"><%= fmt_moeda(nf[:valor_liquido]) %></td>
+                    <td class="px-4 py-3">
+                      <form method="POST" action="/gerencia/nf-fornecedores/<%= nf[:id] %>" onsubmit="return confirm('Excluir esta fatura?')" class="inline">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-slate-400 text-sm text-center py-6">Nenhuma fatura de fornecedor em aberto.</p>
+        <% end %>
+      </div>
+
+      <hr class="my-8 border-slate-200">
+
+      <!-- NF PAGAS -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-800">Notas Fiscais Pagas</h2>
+          <button onclick="document.getElementById('form-nf-paga').classList.toggle('hidden')" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+            + Registrar NF Paga
+          </button>
+        </div>
+
+        <div id="form-nf-paga" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+          <form method="POST" action="/gerencia/nf-pagas">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Cliente *</label>
+                <input type="text" name="nome_cliente" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Centro de Custo</label>
+                <input type="text" name="centro_custo" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Período Apurado</label>
+                <input type="text" name="periodo_apurado" placeholder="Ex: Mar/2026" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Dt. Vencimento</label>
+                <input type="date" name="data_vencimento" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Bruto (R$)</label>
+                <input type="text" name="valor_bruto" placeholder="0,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Líquido (R$)</label>
+                <input type="text" name="valor_liquido" placeholder="0,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+            </div>
+            <div class="mt-3 flex justify-end">
+              <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">Salvar</button>
+            </div>
+          </form>
+        </div>
+
+        <% if @nf_pagas.any? %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-slate-50 text-left">
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Cliente</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Centro Custo</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Período</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Vencimento</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">V. Bruto</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">V. Líquido</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-100">
+                <% @nf_pagas.each do |nf| %>
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3 font-medium text-slate-800"><%= nf[:nome_cliente] %></td>
+                    <td class="px-4 py-3 text-slate-600"><%= nf[:centro_custo] || '-' %></td>
+                    <td class="px-4 py-3 text-slate-600"><%= nf[:periodo_apurado] || '-' %></td>
+                    <td class="px-4 py-3 text-slate-600"><%= nf[:data_vencimento] ? fmt_data(nf[:data_vencimento]) : '-' %></td>
+                    <td class="px-4 py-3 font-semibold text-slate-700"><%= fmt_moeda(nf[:valor_bruto]) %></td>
+                    <td class="px-4 py-3 font-semibold text-emerald-600"><%= fmt_moeda(nf[:valor_liquido]) %></td>
+                    <td class="px-4 py-3">
+                      <form method="POST" action="/gerencia/nf-pagas/<%= nf[:id] %>" onsubmit="return confirm('Excluir?')">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-slate-400 text-sm text-center py-6">Nenhuma NF paga registrada.</p>
+        <% end %>
+      </div>
+
+    <!-- ==============================
+         ABA: CREDENCIAMENTO DE PARCEIROS
+    ============================== -->
+    <% elsif aba == 'parceiros' %>
+
+      <!-- KPIs Parceiros -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200 text-center">
+          <p class="text-3xl font-bold text-blue-700"><%= @resumo_parceiros[:contatados] %></p>
+          <p class="text-xs font-semibold text-blue-600 uppercase mt-1">Contatados/Abordados</p>
+        </div>
+        <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-200 text-center">
+          <p class="text-3xl font-bold text-emerald-700"><%= @resumo_parceiros[:credenciados] %></p>
+          <p class="text-xs font-semibold text-emerald-600 uppercase mt-1">Credenciados</p>
+        </div>
+        <div class="bg-amber-50 rounded-lg p-4 border border-amber-200 text-center">
+          <p class="text-3xl font-bold text-amber-700"><%= @resumo_parceiros[:aguardando] %></p>
+          <p class="text-xs font-semibold text-amber-600 uppercase mt-1">Aguardando Resposta</p>
+        </div>
+        <div class="bg-red-50 rounded-lg p-4 border border-red-200 text-center">
+          <p class="text-3xl font-bold text-red-700"><%= @resumo_parceiros[:fracassados] %></p>
+          <p class="text-xs font-semibold text-red-600 uppercase mt-1">Fracassados</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-slate-800">Parceiros</h2>
+        <button onclick="document.getElementById('form-parceiro').classList.toggle('hidden')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+          + Novo Parceiro
+        </button>
+      </div>
+
+      <div id="form-parceiro" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+        <form method="POST" action="/gerencia/parceiros">
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Nome *</label>
+              <input type="text" name="nome" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Cidade</label>
+              <input type="text" name="cidade" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">UF</label>
+              <input type="text" name="uf" maxlength="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="SP">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+              <select name="status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="contatado">Contatado/Abordado</option>
+                <option value="credenciado">Credenciado</option>
+                <option value="aguardando">Aguardando Resposta</option>
+                <option value="fracassado">Fracassado</option>
+              </select>
+            </div>
+            <div class="flex items-end">
+              <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Salvar</button>
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Observações</label>
+            <input type="text" name="observacoes" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+          </div>
+        </form>
+      </div>
+
+      <!-- Filtro Status -->
+      <div class="flex gap-2 mb-4">
+        <a href="/gerencia?aba=parceiros" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:parc_status].nil? || params[:parc_status].empty? ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' %>">Todos</a>
+        <a href="/gerencia?aba=parceiros&parc_status=contatado" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:parc_status] == 'contatado' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100' %>">Contatados</a>
+        <a href="/gerencia?aba=parceiros&parc_status=credenciado" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:parc_status] == 'credenciado' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' %>">Credenciados</a>
+        <a href="/gerencia?aba=parceiros&parc_status=aguardando" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:parc_status] == 'aguardando' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100' %>">Aguardando</a>
+        <a href="/gerencia?aba=parceiros&parc_status=fracassado" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:parc_status] == 'fracassado' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100' %>">Fracassados</a>
+      </div>
+
+      <% if @parceiros.any? %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-slate-50 text-left">
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Nome</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Cidade/UF</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Observações</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Data</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100">
+              <% @parceiros.each do |p| %>
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-3 font-medium text-slate-800"><%= p[:nome] %></td>
+                  <td class="px-4 py-3 text-slate-600"><%= [p[:cidade], p[:uf]].compact.reject(&:empty?).join('/') %></td>
+                  <td class="px-4 py-3">
+                    <% st_cores = {'contatado'=>'blue','credenciado'=>'emerald','aguardando'=>'amber','fracassado'=>'red'} %>
+                    <% st_labels = {'contatado'=>'Contatado','credenciado'=>'Credenciado','aguardando'=>'Aguardando','fracassado'=>'Fracassado'} %>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= st_cores[p[:status]] || 'slate' %>-100 text-<%= st_cores[p[:status]] || 'slate' %>-800"><%= st_labels[p[:status]] || p[:status] %></span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-500 text-xs"><%= truncar(p[:observacoes], 40) %></td>
+                  <td class="px-4 py-3 text-slate-500 text-xs"><%= p[:created_at] ? fmt_datetime(p[:created_at]) : '-' %></td>
+                  <td class="px-4 py-3 flex gap-2">
+                    <% ['contatado','credenciado','aguardando','fracassado'].each do |st| %>
+                      <% next if st == p[:status] %>
+                      <form method="POST" action="/gerencia/parceiros/<%= p[:id] %>" class="inline">
+                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" name="status" value="<%= st %>">
+                        <button type="submit" class="text-<%= st_cores[st] %>-600 hover:text-<%= st_cores[st] %>-800 text-xs font-medium" title="Mudar para <%= st_labels[st] %>"><%= st_labels[st][0..2] %></button>
+                      </form>
+                    <% end %>
+                    <form method="POST" action="/gerencia/parceiros/<%= p[:id] %>" onsubmit="return confirm('Excluir?')" class="inline">
+                      <input type="hidden" name="_method" value="DELETE">
+                      <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                    </form>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-slate-400 text-sm text-center py-6">Nenhum parceiro registrado.</p>
+      <% end %>
+
+    <!-- ==============================
+         ABA: COMERCIAL / MARKETING
+    ============================== -->
+    <% elsif aba == 'comercial' %>
+
+      <!-- KPIs Comercial -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200 text-center">
+          <p class="text-3xl font-bold text-indigo-700"><%= @resumo_comercial[:contatados] %></p>
+          <p class="text-xs font-semibold text-indigo-600 uppercase mt-1">Contatados/Abordados</p>
+        </div>
+        <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-200 text-center">
+          <p class="text-3xl font-bold text-emerald-700"><%= @resumo_comercial[:sucesso] %></p>
+          <p class="text-xs font-semibold text-emerald-600 uppercase mt-1">Sucesso</p>
+        </div>
+        <div class="bg-amber-50 rounded-lg p-4 border border-amber-200 text-center">
+          <p class="text-3xl font-bold text-amber-700"><%= @resumo_comercial[:aguardando] %></p>
+          <p class="text-xs font-semibold text-amber-600 uppercase mt-1">Aguardando Resposta</p>
+        </div>
+        <div class="bg-red-50 rounded-lg p-4 border border-red-200 text-center">
+          <p class="text-3xl font-bold text-red-700"><%= @resumo_comercial[:fracassados] %></p>
+          <p class="text-xs font-semibold text-red-600 uppercase mt-1">Fracassados</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-slate-800">Clientes — Comercial / Marketing</h2>
+        <button onclick="document.getElementById('form-comercial').classList.toggle('hidden')" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+          + Novo Contato Comercial
+        </button>
+      </div>
+
+      <div id="form-comercial" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+        <form method="POST" action="/gerencia/comercial">
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Razão/Nome *</label>
+              <input type="text" name="razao_nome" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">CNPJ</label>
+              <input type="text" name="cnpj" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="00.000.000/0000-00">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Cidade</label>
+              <input type="text" name="cidade" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">UF</label>
+              <input type="text" name="uf" maxlength="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="SP">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Solução Oferecida</label>
+              <select name="solucao_oferecida" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="">Selecione...</option>
+                <option value="manutencao">Manutenção</option>
+                <option value="combustivel">Combustível</option>
+                <option value="rastreamento">Rastreamento</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+              <select name="status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="contatado">Contatado/Abordado</option>
+                <option value="sucesso">Sucesso</option>
+                <option value="aguardando">Aguardando Resposta</option>
+                <option value="fracassado">Fracassado</option>
+              </select>
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Observações</label>
+            <input type="text" name="observacoes" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+          </div>
+          <div class="mt-3 flex justify-end">
+            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">Salvar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Filtro Status -->
+      <div class="flex gap-2 mb-4">
+        <a href="/gerencia?aba=comercial" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:com_status].nil? || params[:com_status].to_s.empty? ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' %>">Todos</a>
+        <a href="/gerencia?aba=comercial&com_status=contatado" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:com_status] == 'contatado' ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' %>">Contatados</a>
+        <a href="/gerencia?aba=comercial&com_status=sucesso" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:com_status] == 'sucesso' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' %>">Sucesso</a>
+        <a href="/gerencia?aba=comercial&com_status=aguardando" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:com_status] == 'aguardando' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100' %>">Aguardando</a>
+        <a href="/gerencia?aba=comercial&com_status=fracassado" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:com_status] == 'fracassado' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100' %>">Fracassados</a>
+      </div>
+
+      <% if @comercial.any? %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-slate-50 text-left">
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Razão/Nome</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">CNPJ</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Cidade/UF</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Solução</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Data</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100">
+              <% @comercial.each do |c| %>
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-3 font-medium text-slate-800"><%= c[:razao_nome] %></td>
+                  <td class="px-4 py-3 text-slate-600 text-xs"><%= c[:cnpj] || '-' %></td>
+                  <td class="px-4 py-3 text-slate-600"><%= [c[:cidade], c[:uf]].compact.reject(&:empty?).join('/') %></td>
+                  <td class="px-4 py-3">
+                    <% sol_labels = {'manutencao'=>'Manutenção','combustivel'=>'Combustível','rastreamento'=>'Rastreamento'} %>
+                    <% sol_cores = {'manutencao'=>'cyan','combustivel'=>'orange','rastreamento'=>'violet'} %>
+                    <% if c[:solucao_oferecida] && !c[:solucao_oferecida].empty? %>
+                      <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= sol_cores[c[:solucao_oferecida]] || 'slate' %>-100 text-<%= sol_cores[c[:solucao_oferecida]] || 'slate' %>-800"><%= sol_labels[c[:solucao_oferecida]] || c[:solucao_oferecida] %></span>
+                    <% else %>-<% end %>
+                  </td>
+                  <td class="px-4 py-3">
+                    <% st_cores = {'contatado'=>'indigo','sucesso'=>'emerald','aguardando'=>'amber','fracassado'=>'red'} %>
+                    <% st_labels = {'contatado'=>'Contatado','sucesso'=>'Sucesso','aguardando'=>'Aguardando','fracassado'=>'Fracassado'} %>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= st_cores[c[:status]] || 'slate' %>-100 text-<%= st_cores[c[:status]] || 'slate' %>-800"><%= st_labels[c[:status]] || c[:status] %></span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-500 text-xs"><%= c[:created_at] ? fmt_datetime(c[:created_at]) : '-' %></td>
+                  <td class="px-4 py-3 flex gap-2">
+                    <% ['contatado','sucesso','aguardando','fracassado'].each do |st| %>
+                      <% next if st == c[:status] %>
+                      <form method="POST" action="/gerencia/comercial/<%= c[:id] %>" class="inline">
+                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" name="status" value="<%= st %>">
+                        <button type="submit" class="text-<%= st_cores[st] %>-600 hover:text-<%= st_cores[st] %>-800 text-xs font-medium"><%= st_labels[st][0..2] %></button>
+                      </form>
+                    <% end %>
+                    <form method="POST" action="/gerencia/comercial/<%= c[:id] %>" onsubmit="return confirm('Excluir?')" class="inline">
+                      <input type="hidden" name="_method" value="DELETE">
+                      <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                    </form>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-slate-400 text-sm text-center py-6">Nenhum contato comercial registrado.</p>
+      <% end %>
+
+    <!-- ==============================
+         ABA: REDES SOCIAIS
+    ============================== -->
+    <% elsif aba == 'redes' %>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-slate-800">Controle de Redes Sociais</h2>
+        <button onclick="document.getElementById('form-rede').classList.toggle('hidden')" class="px-4 py-2 bg-pink-600 text-white rounded-lg text-sm font-medium hover:bg-pink-700 transition">
+          + Nova Publicação
+        </button>
+      </div>
+
+      <div id="form-rede" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+        <form method="POST" action="/gerencia/redes-sociais">
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Plataforma *</label>
+              <select name="plataforma" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="">Selecione...</option>
+                <option value="instagram">Instagram</option>
+                <option value="facebook">Facebook</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="youtube">YouTube</option>
+                <option value="tiktok">TikTok</option>
+                <option value="twitter">Twitter/X</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Conteúdo</label>
+              <select name="tipo_conteudo" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="post">Post</option>
+                <option value="story">Story</option>
+                <option value="reels">Reels</option>
+                <option value="video">Vídeo</option>
+                <option value="artigo">Artigo</option>
+                <option value="carrossel">Carrossel</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
+              <input type="text" name="descricao" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Data Publicação</label>
+              <input type="date" name="data_publicacao" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+              <select name="status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="planejado">Planejado</option>
+                <option value="publicado">Publicado</option>
+                <option value="impulsionado">Impulsionado</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Alcance</label>
+              <input type="number" name="alcance" value="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Engajamento</label>
+              <input type="number" name="engajamento" value="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Cliques</label>
+              <input type="number" name="cliques" value="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Conversões</label>
+              <input type="number" name="conversoes" value="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Texto/Dica para Engajamento</label>
+            <textarea name="texto_engajamento" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="Inclua aqui ideias e textos para melhorar o engajamento nas redes sociais..."></textarea>
+          </div>
+          <div class="mt-3 flex justify-end">
+            <button type="submit" class="px-6 py-2 bg-pink-600 text-white rounded-lg text-sm font-medium hover:bg-pink-700 transition">Salvar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Dicas de Engajamento -->
+      <div class="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg p-5 mb-6 border border-pink-200">
+        <h3 class="text-sm font-bold text-pink-800 mb-2">Dicas para Melhorar Engajamento</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-pink-700">
+          <div class="flex items-start gap-2">
+            <span class="text-pink-500 font-bold">1.</span>
+            <span>Poste nos horários de pico: Instagram (11h-13h, 19h-21h), LinkedIn (8h-10h, 17h-18h)</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="text-pink-500 font-bold">2.</span>
+            <span>Use hashtags relevantes (5-15 por post). Misture populares e nichadas</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="text-pink-500 font-bold">3.</span>
+            <span>Reels e vídeos curtos têm 2x mais alcance que posts estáticos</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="text-pink-500 font-bold">4.</span>
+            <span>Responda todos os comentários em até 1h para aumentar o engajamento</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="text-pink-500 font-bold">5.</span>
+            <span>Crie séries de conteúdo para manter a audiência voltando (ex: "Dica do dia")</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <span class="text-pink-500 font-bold">6.</span>
+            <span>Use CTAs claras: "Comente", "Compartilhe", "Salve para depois"</span>
+          </div>
+        </div>
+      </div>
+
+      <% if @redes_sociais.any? %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-slate-50 text-left">
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Plataforma</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Tipo</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Descrição</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Data</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Alcance</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Engajamento</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100">
+              <% @redes_sociais.each do |rs| %>
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-3">
+                    <% plat_cores = {'instagram'=>'pink','facebook'=>'blue','linkedin'=>'sky','youtube'=>'red','tiktok'=>'slate','twitter'=>'cyan'} %>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= plat_cores[rs[:plataforma]] || 'slate' %>-100 text-<%= plat_cores[rs[:plataforma]] || 'slate' %>-800"><%= rs[:plataforma]&.capitalize %></span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-600"><%= rs[:tipo_conteudo]&.capitalize || '-' %></td>
+                  <td class="px-4 py-3 text-slate-700"><%= truncar(rs[:descricao], 35) %></td>
+                  <td class="px-4 py-3 text-slate-500"><%= rs[:data_publicacao] ? fmt_data(rs[:data_publicacao]) : '-' %></td>
+                  <td class="px-4 py-3 text-slate-600"><%= rs[:alcance] %></td>
+                  <td class="px-4 py-3 text-slate-600"><%= rs[:engajamento] %></td>
+                  <td class="px-4 py-3">
+                    <% pub_cores = {'planejado'=>'slate','publicado'=>'emerald','impulsionado'=>'amber'} %>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= pub_cores[rs[:status]] || 'slate' %>-100 text-<%= pub_cores[rs[:status]] || 'slate' %>-800"><%= rs[:status]&.capitalize %></span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <form method="POST" action="/gerencia/redes-sociais/<%= rs[:id] %>" onsubmit="return confirm('Excluir?')" class="inline">
+                      <input type="hidden" name="_method" value="DELETE">
+                      <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                    </form>
+                  </td>
+                </tr>
+                <% if rs[:texto_engajamento] && !rs[:texto_engajamento].to_s.empty? %>
+                  <tr class="bg-pink-50/50">
+                    <td colspan="8" class="px-6 py-2 text-xs text-pink-700 italic">
+                      <strong>Texto engajamento:</strong> <%= rs[:texto_engajamento] %>
+                    </td>
+                  </tr>
+                <% end %>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-slate-400 text-sm text-center py-6">Nenhuma publicação registrada.</p>
+      <% end %>
+
+    <!-- ==============================
+         ABA: LICITAÇÕES
+    ============================== -->
+    <% elsif aba == 'licitacoes' %>
+
+      <!-- KPIs Licitações -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div class="bg-purple-50 rounded-lg p-4 border border-purple-200 text-center">
+          <p class="text-3xl font-bold text-purple-700"><%= @resumo_licitacoes[:inseridas] %></p>
+          <p class="text-xs font-semibold text-purple-600 uppercase mt-1">Inseridas no Portal</p>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200 text-center">
+          <p class="text-3xl font-bold text-blue-700"><%= @resumo_licitacoes[:cadastradas] %></p>
+          <p class="text-xs font-semibold text-blue-600 uppercase mt-1">Cadastradas/Portal</p>
+        </div>
+        <div class="bg-amber-50 rounded-lg p-4 border border-amber-200 text-center">
+          <p class="text-3xl font-bold text-amber-700"><%= @resumo_licitacoes[:andamento] %></p>
+          <p class="text-xs font-semibold text-amber-600 uppercase mt-1">Em Andamento</p>
+        </div>
+        <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-200 text-center">
+          <p class="text-3xl font-bold text-emerald-700"><%= @resumo_licitacoes[:ganhas] %></p>
+          <p class="text-xs font-semibold text-emerald-600 uppercase mt-1">Ganhas</p>
+        </div>
+        <div class="bg-slate-100 rounded-lg p-4 border border-slate-300 text-center">
+          <p class="text-3xl font-bold text-slate-700"><%= @resumo_licitacoes[:finalizadas] %></p>
+          <p class="text-xs font-semibold text-slate-600 uppercase mt-1">Finalizadas</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-slate-800">Licitações</h2>
+        <button onclick="document.getElementById('form-licitacao').classList.toggle('hidden')" class="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">
+          + Nova Licitação
+        </button>
+      </div>
+
+      <div id="form-licitacao" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+        <form method="POST" action="/gerencia/licitacoes">
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Órgão *</label>
+              <input type="text" name="nome_orgao" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Cidade</label>
+              <input type="text" name="cidade" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">UF</label>
+              <input type="text" name="uf" maxlength="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" placeholder="SP">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">N° Edital</label>
+              <input type="text" name="numero_edital" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Objeto</label>
+              <input type="text" name="objeto" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Estimado (R$)</label>
+              <input type="text" name="valor_estimado" placeholder="0,00" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Data Abertura</label>
+              <input type="date" name="data_abertura" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+              <select name="status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                <option value="inserida">Inserida no Portal</option>
+                <option value="cadastrada">Cadastrada/Portal</option>
+                <option value="andamento">Em Andamento</option>
+                <option value="ganha">Ganha</option>
+                <option value="finalizada">Finalizada</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Portal</label>
+              <input type="text" name="portal" placeholder="ComprasNet, BLL, etc." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Observações</label>
+              <input type="text" name="observacoes" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+          </div>
+          <div class="mt-3 flex justify-end">
+            <button type="submit" class="px-6 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition">Salvar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Filtro Status -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <a href="/gerencia?aba=licitacoes" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:lic_status].nil? || params[:lic_status].to_s.empty? ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' %>">Todas</a>
+        <a href="/gerencia?aba=licitacoes&lic_status=inserida" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:lic_status] == 'inserida' ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100' %>">Inseridas</a>
+        <a href="/gerencia?aba=licitacoes&lic_status=cadastrada" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:lic_status] == 'cadastrada' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100' %>">Cadastradas</a>
+        <a href="/gerencia?aba=licitacoes&lic_status=andamento" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:lic_status] == 'andamento' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100' %>">Em Andamento</a>
+        <a href="/gerencia?aba=licitacoes&lic_status=ganha" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:lic_status] == 'ganha' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' %>">Ganhas</a>
+        <a href="/gerencia?aba=licitacoes&lic_status=finalizada" class="px-3 py-1.5 rounded-full text-xs font-medium <%= params[:lic_status] == 'finalizada' ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' %>">Finalizadas</a>
+      </div>
+
+      <% if @licitacoes.any? %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr class="bg-slate-50 text-left">
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Órgão</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Cidade/UF</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">N° Edital</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Objeto</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Valor Est.</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Abertura</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Portal</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+              <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+            </tr></thead>
+            <tbody class="divide-y divide-slate-100">
+              <% @licitacoes.each do |l| %>
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-3 font-medium text-slate-800"><%= l[:nome_orgao] %></td>
+                  <td class="px-4 py-3 text-slate-600"><%= [l[:cidade], l[:uf]].compact.reject(&:empty?).join('/') %></td>
+                  <td class="px-4 py-3 text-slate-600"><%= l[:numero_edital] || '-' %></td>
+                  <td class="px-4 py-3 text-slate-600 text-xs"><%= truncar(l[:objeto], 30) %></td>
+                  <td class="px-4 py-3 font-semibold text-slate-700"><%= l[:valor_estimado].to_f > 0 ? fmt_moeda(l[:valor_estimado]) : '-' %></td>
+                  <td class="px-4 py-3 text-slate-500"><%= l[:data_abertura] ? fmt_data(l[:data_abertura]) : '-' %></td>
+                  <td class="px-4 py-3 text-slate-500 text-xs"><%= l[:portal] || '-' %></td>
+                  <td class="px-4 py-3">
+                    <% lic_cores = {'inserida'=>'purple','cadastrada'=>'blue','andamento'=>'amber','ganha'=>'emerald','finalizada'=>'slate'} %>
+                    <% lic_labels = {'inserida'=>'Inserida','cadastrada'=>'Cadastrada','andamento'=>'Andamento','ganha'=>'Ganha','finalizada'=>'Finalizada'} %>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= lic_cores[l[:status]] || 'slate' %>-100 text-<%= lic_cores[l[:status]] || 'slate' %>-800"><%= lic_labels[l[:status]] || l[:status] %></span>
+                  </td>
+                  <td class="px-4 py-3 flex gap-1 flex-wrap">
+                    <% ['inserida','cadastrada','andamento','ganha','finalizada'].each do |st| %>
+                      <% next if st == l[:status] %>
+                      <form method="POST" action="/gerencia/licitacoes/<%= l[:id] %>" class="inline">
+                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" name="status" value="<%= st %>">
+                        <button type="submit" class="text-<%= lic_cores[st] %>-600 hover:text-<%= lic_cores[st] %>-800 text-xs font-medium" title="<%= lic_labels[st] %>"><%= lic_labels[st][0..2] %></button>
+                      </form>
+                    <% end %>
+                    <form method="POST" action="/gerencia/licitacoes/<%= l[:id] %>" onsubmit="return confirm('Excluir?')" class="inline">
+                      <input type="hidden" name="_method" value="DELETE">
+                      <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                    </form>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-slate-400 text-sm text-center py-6">Nenhuma licitação registrada.</p>
+      <% end %>
+
+    <!-- ==============================
+         ABA: OPERAÇÕES E SUPORTE
+    ============================== -->
+    <% elsif aba == 'operacoes' %>
+
+      <!-- TREINAMENTOS -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-800">Treinamentos Realizados</h2>
+          <button onclick="document.getElementById('form-treinamento').classList.toggle('hidden')" class="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition">
+            + Novo Treinamento
+          </button>
+        </div>
+
+        <div id="form-treinamento" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+          <form method="POST" action="/gerencia/treinamentos">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Cliente/Fornecedor *</label>
+                <input type="text" name="nome_cliente_fornecedor" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Solução Treinada</label>
+                <select name="solucao_treinada" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                  <option value="">Selecione...</option>
+                  <option value="manutencao">Manutenção</option>
+                  <option value="combustivel">Combustível</option>
+                  <option value="rastreamento">Rastreamento</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Quem Treinou</label>
+                <input type="text" name="quem_treinou" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Data</label>
+                <input type="date" name="data_treinamento" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition">Salvar</button>
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Observações</label>
+              <input type="text" name="observacoes" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+            </div>
+          </form>
+        </div>
+
+        <% if @treinamentos.any? %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-slate-50 text-left">
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Cliente/Fornecedor</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Solução</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Quem Treinou</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Data</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Observações</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-100">
+                <% @treinamentos.each do |t| %>
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3 font-medium text-slate-800"><%= t[:nome_cliente_fornecedor] %></td>
+                    <td class="px-4 py-3">
+                      <% sol_labels = {'manutencao'=>'Manutenção','combustivel'=>'Combustível','rastreamento'=>'Rastreamento'} %>
+                      <% sol_cores = {'manutencao'=>'cyan','combustivel'=>'orange','rastreamento'=>'violet'} %>
+                      <% if t[:solucao_treinada] && !t[:solucao_treinada].empty? %>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= sol_cores[t[:solucao_treinada]] || 'slate' %>-100 text-<%= sol_cores[t[:solucao_treinada]] || 'slate' %>-800"><%= sol_labels[t[:solucao_treinada]] || t[:solucao_treinada] %></span>
+                      <% else %>-<% end %>
+                    </td>
+                    <td class="px-4 py-3 text-slate-600"><%= t[:quem_treinou] || '-' %></td>
+                    <td class="px-4 py-3 text-slate-500"><%= t[:data_treinamento] ? fmt_data(t[:data_treinamento]) : '-' %></td>
+                    <td class="px-4 py-3 text-slate-500 text-xs"><%= truncar(t[:observacoes], 30) %></td>
+                    <td class="px-4 py-3">
+                      <form method="POST" action="/gerencia/treinamentos/<%= t[:id] %>" onsubmit="return confirm('Excluir?')">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-slate-400 text-sm text-center py-6">Nenhum treinamento registrado.</p>
+        <% end %>
+      </div>
+
+      <hr class="my-8 border-slate-200">
+
+      <!-- CHAMADOS -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-800">Chamados Abertos</h2>
+          <button onclick="document.getElementById('form-chamado').classList.toggle('hidden')" class="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition">
+            + Novo Chamado
+          </button>
+        </div>
+
+        <div id="form-chamado" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+          <form method="POST" action="/gerencia/chamados">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Solução *</label>
+                <select name="solucao" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                  <option value="">Selecione...</option>
+                  <option value="manutencao">Manutenção</option>
+                  <option value="combustivel">Combustível</option>
+                  <option value="rastreamento">Rastreamento</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição *</label>
+                <input type="text" name="descricao" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Aberto por</label>
+                <input type="text" name="aberto_por" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Origem</label>
+                <select name="origem" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                  <option value="equipe">Nossa Equipe</option>
+                  <option value="fornecedor">Fornecedor</option>
+                  <option value="cliente">Cliente</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Prioridade</label>
+                <select name="prioridade" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                  <option value="baixa">Baixa</option>
+                  <option value="media" selected>Média</option>
+                  <option value="alta">Alta</option>
+                  <option value="critica">Crítica</option>
+                </select>
+              </div>
+              <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-rose-600 text-white rounded-lg text-sm font-medium hover:bg-rose-700 transition">Salvar</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Resumo Chamados por Solução -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <% ['manutencao', 'combustivel', 'rastreamento'].each do |sol| %>
+            <% qtd = @chamados.count { |c| c[:solucao] == sol && c[:status] == 'aberto' } %>
+            <% cor = sol == 'manutencao' ? 'cyan' : (sol == 'combustivel' ? 'orange' : 'violet') %>
+            <% label = sol == 'manutencao' ? 'Manutenção' : (sol == 'combustivel' ? 'Combustível' : 'Rastreamento') %>
+            <div class="bg-<%= cor %>-50 rounded-lg p-3 border border-<%= cor %>-200 flex items-center justify-between">
+              <div>
+                <p class="text-xs font-semibold text-<%= cor %>-600 uppercase"><%= label %></p>
+                <p class="text-xs text-<%= cor %>-500 mt-0.5">Chamados abertos</p>
+              </div>
+              <p class="text-2xl font-bold text-<%= cor %>-700"><%= qtd %></p>
+            </div>
+          <% end %>
+        </div>
+
+        <% if @chamados.any? %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-slate-50 text-left">
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Solução</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Descrição</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Aberto por</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Origem</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Prioridade</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Data</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-100">
+                <% @chamados.each do |ch| %>
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3">
+                      <% sol_labels = {'manutencao'=>'Manutenção','combustivel'=>'Combustível','rastreamento'=>'Rastreamento'} %>
+                      <% sol_cores = {'manutencao'=>'cyan','combustivel'=>'orange','rastreamento'=>'violet'} %>
+                      <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= sol_cores[ch[:solucao]] || 'slate' %>-100 text-<%= sol_cores[ch[:solucao]] || 'slate' %>-800"><%= sol_labels[ch[:solucao]] || ch[:solucao] %></span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-700"><%= truncar(ch[:descricao], 35) %></td>
+                    <td class="px-4 py-3 text-slate-600"><%= ch[:aberto_por] || '-' %></td>
+                    <td class="px-4 py-3">
+                      <% orig_labels = {'equipe'=>'Equipe','fornecedor'=>'Fornecedor','cliente'=>'Cliente'} %>
+                      <span class="text-xs font-medium text-slate-600"><%= orig_labels[ch[:origem]] || ch[:origem] %></span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <% pri_cores = {'baixa'=>'slate','media'=>'blue','alta'=>'amber','critica'=>'red'} %>
+                      <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= pri_cores[ch[:prioridade]] || 'slate' %>-100 text-<%= pri_cores[ch[:prioridade]] || 'slate' %>-800"><%= ch[:prioridade]&.capitalize %></span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <% ch_st_cores = {'aberto'=>'red','andamento'=>'amber','resolvido'=>'emerald','fechado'=>'slate'} %>
+                      <% ch_st_labels = {'aberto'=>'Aberto','andamento'=>'Andamento','resolvido'=>'Resolvido','fechado'=>'Fechado'} %>
+                      <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= ch_st_cores[ch[:status]] || 'slate' %>-100 text-<%= ch_st_cores[ch[:status]] || 'slate' %>-800"><%= ch_st_labels[ch[:status]] || ch[:status] %></span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-500 text-xs"><%= ch[:created_at] ? fmt_datetime(ch[:created_at]) : '-' %></td>
+                    <td class="px-4 py-3 flex gap-1 flex-wrap">
+                      <% ['aberto','andamento','resolvido','fechado'].each do |st| %>
+                        <% next if st == ch[:status] %>
+                        <form method="POST" action="/gerencia/chamados/<%= ch[:id] %>" class="inline">
+                          <input type="hidden" name="_method" value="PUT">
+                          <input type="hidden" name="status" value="<%= st %>">
+                          <button type="submit" class="text-<%= ch_st_cores[st] %>-600 hover:text-<%= ch_st_cores[st] %>-800 text-xs font-medium"><%= ch_st_labels[st][0..2] %></button>
+                        </form>
+                      <% end %>
+                      <form method="POST" action="/gerencia/chamados/<%= ch[:id] %>" onsubmit="return confirm('Excluir?')" class="inline">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-slate-400 text-sm text-center py-6">Nenhum chamado registrado.</p>
+        <% end %>
+      </div>
+
+      <hr class="my-8 border-slate-200">
+
+      <!-- MELHORIAS IMPLANTADAS -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-800">Melhorias Implantadas</h2>
+          <button onclick="document.getElementById('form-melhoria').classList.toggle('hidden')" class="px-4 py-2 bg-sky-600 text-white rounded-lg text-sm font-medium hover:bg-sky-700 transition">
+            + Nova Melhoria
+          </button>
+        </div>
+
+        <div id="form-melhoria" class="hidden bg-slate-50 rounded-lg p-5 mb-4 border border-slate-200">
+          <form method="POST" action="/gerencia/melhorias">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Título *</label>
+                <input type="text" name="titulo" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Solução</label>
+                <select name="solucao" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                  <option value="geral">Geral</option>
+                  <option value="manutencao">Manutenção</option>
+                  <option value="combustivel">Combustível</option>
+                  <option value="rastreamento">Rastreamento</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+                  <option value="planejada">Planejada</option>
+                  <option value="desenvolvimento">Em Desenvolvimento</option>
+                  <option value="implantada">Implantada</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Data Implantação</label>
+                <input type="date" name="data_implantacao" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
+              <textarea name="descricao" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"></textarea>
+            </div>
+            <div class="mt-3 flex justify-end">
+              <button type="submit" class="px-6 py-2 bg-sky-600 text-white rounded-lg text-sm font-medium hover:bg-sky-700 transition">Salvar</button>
+            </div>
+          </form>
+        </div>
+
+        <% if @melhorias.any? %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-slate-50 text-left">
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Título</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Descrição</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Solução</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Data Impl.</th>
+                <th class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Ações</th>
+              </tr></thead>
+              <tbody class="divide-y divide-slate-100">
+                <% @melhorias.each do |m| %>
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3 font-medium text-slate-800"><%= m[:titulo] %></td>
+                    <td class="px-4 py-3 text-slate-600 text-xs"><%= truncar(m[:descricao], 40) %></td>
+                    <td class="px-4 py-3">
+                      <% sol_labels = {'manutencao'=>'Manutenção','combustivel'=>'Combustível','rastreamento'=>'Rastreamento','geral'=>'Geral'} %>
+                      <span class="text-xs font-medium text-slate-600"><%= sol_labels[m[:solucao]] || m[:solucao] %></span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <% mel_cores = {'planejada'=>'slate','desenvolvimento'=>'amber','implantada'=>'emerald'} %>
+                      <% mel_labels = {'planejada'=>'Planejada','desenvolvimento'=>'Em Desenvolvimento','implantada'=>'Implantada'} %>
+                      <span class="px-2 py-1 text-xs font-medium rounded-full bg-<%= mel_cores[m[:status]] || 'slate' %>-100 text-<%= mel_cores[m[:status]] || 'slate' %>-800"><%= mel_labels[m[:status]] || m[:status] %></span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-500"><%= m[:data_implantacao] ? fmt_data(m[:data_implantacao]) : '-' %></td>
+                    <td class="px-4 py-3 flex gap-1 flex-wrap">
+                      <% ['planejada','desenvolvimento','implantada'].each do |st| %>
+                        <% next if st == m[:status] %>
+                        <form method="POST" action="/gerencia/melhorias/<%= m[:id] %>" class="inline">
+                          <input type="hidden" name="_method" value="PUT">
+                          <input type="hidden" name="status" value="<%= st %>">
+                          <button type="submit" class="text-<%= mel_cores[st] %>-600 hover:text-<%= mel_cores[st] %>-800 text-xs font-medium"><%= mel_labels[st][0..2] %></button>
+                        </form>
+                      <% end %>
+                      <form method="POST" action="/gerencia/melhorias/<%= m[:id] %>" onsubmit="return confirm('Excluir?')" class="inline">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-medium">Excluir</button>
+                      </form>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-slate-400 text-sm text-center py-6">Nenhuma melhoria registrada.</p>
+        <% end %>
+      </div>
+
+    <% end %>
+  </div>
+</div>

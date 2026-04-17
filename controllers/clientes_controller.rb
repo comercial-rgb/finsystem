@@ -153,6 +153,7 @@ module FinSystem
       # ========================================
       get '/api/clientes/buscar_documento' do
         content_type :json
+        halt 401, { error: 'Não autorizado' }.to_json unless session[:usuario_id]
         doc = params[:documento]&.gsub(/\D/, '')
         return { success: false, message: 'Documento não informado' }.to_json if doc.nil? || doc.empty?
 
@@ -176,6 +177,7 @@ module FinSystem
       # Criar cliente inline via JSON (da tela de movimentação)
       post '/api/clientes/criar_rapido' do
         content_type :json
+        halt 401, { error: 'Não autorizado' }.to_json unless session[:usuario_id]
         begin
           dados = JSON.parse(request.body.read, symbolize_names: true)
           

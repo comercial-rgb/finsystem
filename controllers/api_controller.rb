@@ -8,8 +8,13 @@ module FinSystem
 
       set :views, File.join(File.dirname(__FILE__), '..', 'views')
 
+      # Rotas públicas que não exigem API key
+      ROTAS_API_PUBLICAS = %w[/api/health].freeze
+
       before do
         content_type :json
+        # Pular autenticação para rotas públicas da API
+        pass if ROTAS_API_PUBLICAS.include?(request.path_info)
         autenticar_api
       end
 
@@ -23,6 +28,10 @@ module FinSystem
         }
 
         unless api_key && Rack::Utils.secure_compare(api_key, expected)
+          # Se for requisição de navegador, redirecionar ao invés de JSON
+          if request.accept.any? { |a| a.to_s.include?('text/html') } && !request.xhr?
+            halt 302, { 'Location' => '/' }, []
+          end
           halt 401, { error: 'API key inválida ou ausente', code: 'UNAUTHORIZED' }.to_json
         end
       end

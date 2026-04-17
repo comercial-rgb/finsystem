@@ -28,6 +28,7 @@ require_relative 'models/comprovante'
 require_relative 'models/pessoal'
 require_relative 'models/audit_log'
 require_relative 'models/cartao_credito'
+require_relative 'models/gerencia'
 
 require_relative 'services/validation'
 require_relative 'services/recorrencia'
@@ -46,6 +47,7 @@ require_relative 'controllers/cartoes_controller'
 require_relative 'controllers/despesas_controller'
 require_relative 'controllers/fluxo_caixa_controller'
 require_relative 'controllers/api_controller'
+require_relative 'controllers/gerencia_controller'
 
 module FinSystem
   # ========================================
@@ -154,6 +156,7 @@ module FinSystem
     use Controllers::CartoesController
     use Controllers::DespesasController
     use Controllers::FluxoCaixaController
+    use Controllers::GerenciaController
     use Controllers::ApiController
 
     # ========================================

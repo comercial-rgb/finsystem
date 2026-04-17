@@ -453,6 +453,167 @@ module FinSystem
       end
 
       # ========================================
+      # GERÊNCIA - RECEBIMENTOS (Manutenção, Rastreamento, Combustível)
+      # ========================================
+      db.create_table?(:gerencia_recebimentos) do
+        primary_key :id
+        String :frente, null: false                  # manutencao, rastreamento, combustivel
+        String :descricao
+        BigDecimal :valor, size: [15, 2], null: false
+        Date :data_recebimento
+        String :observacoes, text: true
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - NF EM ABERTO - CLIENTES
+      # ========================================
+      db.create_table?(:gerencia_nf_clientes) do
+        primary_key :id
+        String :nome_cliente, null: false
+        String :centro_custo
+        String :periodo_apurado
+        Date :data_vencimento
+        BigDecimal :valor_bruto, size: [15, 2], default: 0
+        BigDecimal :valor_liquido, size: [15, 2], default: 0
+        String :status, default: 'aberta'            # aberta, paga, vencida
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - NF EM ABERTO - FORNECEDORES
+      # ========================================
+      db.create_table?(:gerencia_nf_fornecedores) do
+        primary_key :id
+        String :numero_fatura
+        String :cliente_centro_custo
+        String :periodo_apurado
+        Date :vencimento
+        BigDecimal :valor_bruto, size: [15, 2], default: 0
+        BigDecimal :valor_liquido, size: [15, 2], default: 0
+        String :status, default: 'aberta'            # aberta, paga, vencida
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - NF PAGAS
+      # ========================================
+      db.create_table?(:gerencia_nf_pagas) do
+        primary_key :id
+        String :nome_cliente, null: false
+        String :centro_custo
+        String :periodo_apurado
+        Date :data_vencimento
+        BigDecimal :valor_bruto, size: [15, 2], default: 0
+        BigDecimal :valor_liquido, size: [15, 2], default: 0
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - CREDENCIAMENTO DE PARCEIROS
+      # ========================================
+      db.create_table?(:gerencia_parceiros) do
+        primary_key :id
+        String :nome, null: false
+        String :cidade
+        String :uf
+        String :status, default: 'contatado'         # contatado, credenciado, aguardando, fracassado
+        String :observacoes, text: true
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - COMERCIAL / MARKETING
+      # ========================================
+      db.create_table?(:gerencia_comercial) do
+        primary_key :id
+        String :razao_nome, null: false
+        String :cnpj
+        String :cidade
+        String :uf
+        String :solucao_oferecida                    # manutencao, combustivel, rastreamento
+        String :status, default: 'contatado'         # contatado, sucesso, aguardando, fracassado
+        String :observacoes, text: true
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - REDES SOCIAIS
+      # ========================================
+      db.create_table?(:gerencia_redes_sociais) do
+        primary_key :id
+        String :plataforma, null: false              # instagram, facebook, linkedin, youtube, tiktok
+        String :tipo_conteudo                        # post, story, reels, video, artigo
+        String :descricao
+        Date :data_publicacao
+        Integer :alcance, default: 0
+        Integer :engajamento, default: 0
+        Integer :cliques, default: 0
+        Integer :conversoes, default: 0
+        String :texto_engajamento, text: true        # Texto/dica para melhorar engajamento
+        String :status, default: 'planejado'         # planejado, publicado, impulsionado
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - LICITAÇÕES
+      # ========================================
+      db.create_table?(:gerencia_licitacoes) do
+        primary_key :id
+        String :nome_orgao, null: false
+        String :cidade
+        String :uf
+        String :numero_edital
+        String :objeto, text: true
+        BigDecimal :valor_estimado, size: [15, 2], default: 0
+        Date :data_abertura
+        String :status, default: 'inserida'          # inserida, cadastrada, andamento, ganha, finalizada
+        String :portal                               # ComprasNet, BLL, Licitanet, etc.
+        String :observacoes, text: true
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - TREINAMENTOS (Operações e Suporte)
+      # ========================================
+      db.create_table?(:gerencia_treinamentos) do
+        primary_key :id
+        String :nome_cliente_fornecedor, null: false
+        String :solucao_treinada                     # manutencao, combustivel, rastreamento
+        String :quem_treinou
+        Date :data_treinamento
+        String :observacoes, text: true
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - CHAMADOS (Operações e Suporte)
+      # ========================================
+      db.create_table?(:gerencia_chamados) do
+        primary_key :id
+        String :solucao, null: false                 # manutencao, combustivel, rastreamento
+        String :descricao, null: false
+        String :aberto_por                           # nome de quem abriu
+        String :origem, default: 'equipe'            # equipe, fornecedor, cliente
+        String :status, default: 'aberto'            # aberto, andamento, resolvido, fechado
+        String :prioridade, default: 'media'         # baixa, media, alta, critica
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
+      # GERÊNCIA - MELHORIAS IMPLANTADAS
+      # ========================================
+      db.create_table?(:gerencia_melhorias) do
+        primary_key :id
+        String :titulo, null: false
+        String :descricao, text: true
+        String :solucao                              # manutencao, combustivel, rastreamento, geral
+        String :status, default: 'planejada'         # planejada, desenvolvimento, implantada
+        Date :data_implantacao
+        DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP
+      end
+
+      # ========================================
       # SALDO ATUAL NAS CONTAS BANCÁRIAS
       # ========================================
       unless db[:contas_bancarias].columns.include?(:saldo_atual)
