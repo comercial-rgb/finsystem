@@ -106,6 +106,13 @@ module FinSystem
         begin
           params[:usuario_id] = usuario_logado[:id]
 
+          # Validar valor_bruto obrigatório (exceto antecipações que usam campos próprios)
+          if params[:is_antecipacao] != 'true' && params[:valor_bruto].to_s.strip.empty?
+            session[:flash_error] = 'O valor bruto é obrigatório.'
+            redirect '/movimentacoes/nova'
+            return
+          end
+
           if params[:is_antecipacao] == 'true'
             # Fluxo de antecipação: gera 2 movimentações automaticamente
             fornecedor = FinSystem::Database.db[:fornecedores].where(id: params[:fornecedor_id].to_i).first

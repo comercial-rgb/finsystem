@@ -123,7 +123,7 @@
       </div>
 
       <!-- Campos para DESPESA -->
-      <div id="campos-despesa" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div id="campos-despesa" class="grid grid-cols-1 md:grid-cols-3 gap-4" style="display:none">
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Valor *</label>
           <input type="text" id="valor_bruto_despesa" placeholder="0,00"
@@ -132,7 +132,7 @@
       </div>
 
       <!-- Campos de antecipação -->
-      <div id="campos-antecipacao" class="hidden space-y-4">
+      <div id="campos-antecipacao" class="space-y-4" style="display:none">
         <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
           <p class="text-sm text-purple-800 font-medium mb-3">
             💡 Antecipação: Informe o valor original do faturamento e o valor que será enviado ao fornecedor. A diferença será registrada como lucro.
@@ -477,10 +477,10 @@ function toggleTipo() {
   if (!tipoSelecionado) return;
   var tipo = tipoSelecionado.value;
 
-  // Valores: mostrar campos corretos
-  document.getElementById('campos-receita').classList.toggle('hidden', tipo !== 'receita');
-  document.getElementById('campos-despesa').classList.toggle('hidden', tipo !== 'despesa');
-  document.getElementById('campos-antecipacao').classList.add('hidden');
+  // Valores: mostrar campos corretos (usar style.display para evitar conflito hidden/grid do Tailwind)
+  document.getElementById('campos-receita').style.display = tipo === 'receita' ? 'grid' : 'none';
+  document.getElementById('campos-despesa').style.display = tipo === 'despesa' ? 'grid' : 'none';
+  document.getElementById('campos-antecipacao').style.display = 'none';
 
   // Sincronizar valor_bruto entre campos
   syncValorBruto(tipo);
@@ -508,9 +508,9 @@ function toggleAntecipacao() {
   document.querySelectorAll('input[name="tipo"]').forEach(r => r.checked = false);
 
   // Valores
-  document.getElementById('campos-receita').classList.add('hidden');
-  document.getElementById('campos-despesa').classList.add('hidden');
-  document.getElementById('campos-antecipacao').classList.remove('hidden');
+  document.getElementById('campos-receita').style.display = 'none';
+  document.getElementById('campos-despesa').style.display = 'none';
+  document.getElementById('campos-antecipacao').style.display = 'block';
 
   // Mostrar fornecedor, esconder cliente
   document.getElementById('campo-cliente').classList.add('hidden');
@@ -542,10 +542,14 @@ function syncValorBruto(tipo) {
   var despesaInput = document.getElementById('valor_bruto_despesa');
   if (tipo === 'receita') {
     receitaInput.name = 'valor_bruto';
+    receitaInput.required = true;
     despesaInput.removeAttribute('name');
+    despesaInput.required = false;
   } else {
     despesaInput.name = 'valor_bruto';
+    despesaInput.required = true;
     receitaInput.removeAttribute('name');
+    receitaInput.required = false;
   }
 }
 

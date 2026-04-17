@@ -218,10 +218,10 @@ module FinSystem
                   .left_join(:socios, Sequel[:socios][:id] => Sequel[:movimentacoes][:socio_id])
 
         # Filtros
-        query = query.where(Sequel[:movimentacoes][:empresa_id] => filtros[:empresa_id].to_i) if filtros[:empresa_id]
-        query = query.where(Sequel[:movimentacoes][:tipo] => filtros[:tipo]) if filtros[:tipo] && !filtros[:tipo].empty?
-        query = query.where(Sequel[:movimentacoes][:conta_bancaria_id] => filtros[:conta_bancaria_id].to_i) if filtros[:conta_bancaria_id]
-        query = query.where(Sequel[:movimentacoes][:status] => filtros[:status]) if filtros[:status] && !filtros[:status].empty?
+        query = query.where(Sequel[:movimentacoes][:empresa_id] => filtros[:empresa_id].to_i) if filtros[:empresa_id] && !filtros[:empresa_id].to_s.empty?
+        query = query.where(Sequel[:movimentacoes][:tipo] => filtros[:tipo]) if filtros[:tipo] && !filtros[:tipo].to_s.empty?
+        query = query.where(Sequel[:movimentacoes][:conta_bancaria_id] => filtros[:conta_bancaria_id].to_i) if filtros[:conta_bancaria_id] && !filtros[:conta_bancaria_id].to_s.empty?
+        query = query.where(Sequel[:movimentacoes][:status] => filtros[:status]) if filtros[:status] && !filtros[:status].to_s.empty?
 
         if filtros[:mes] && filtros[:ano]
           inicio = Date.new(filtros[:ano].to_i, filtros[:mes].to_i, 1)
