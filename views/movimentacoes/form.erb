@@ -678,6 +678,33 @@ document.addEventListener('DOMContentLoaded', function() {
   setupSocioField();
   setupBuscaCliente();
 
+  // === Defaults: Sicredi, PIX, Repasse a Fornecedor ===
+  // Selecionar conta Sicredi como padrão
+  var contaSelect = document.querySelector('[name="conta_bancaria_id"]');
+  if (contaSelect) {
+    for (var i = 0; i < contaSelect.options.length; i++) {
+      if (contaSelect.options[i].text.toLowerCase().indexOf('sicredi') !== -1) {
+        contaSelect.selectedIndex = i;
+        break;
+      }
+    }
+  }
+
+  // Selecionar PIX como forma de pagamento padrão
+  var pagSelect = document.querySelector('[name="forma_pagamento"]');
+  if (pagSelect) pagSelect.value = 'pix';
+
+  // Selecionar "Repasse a Fornecedor" como categoria padrão para despesas
+  var catSelect = document.getElementById('select-categoria');
+  if (catSelect) {
+    for (var i = 0; i < catSelect.options.length; i++) {
+      if (catSelect.options[i].text.toLowerCase().indexOf('repasse') !== -1) {
+        catSelect.selectedIndex = i;
+        break;
+      }
+    }
+  }
+
   // Sincronizar valor ao submit
   document.querySelector('form').addEventListener('submit', function() {
     var tipo = document.querySelector('input[name="tipo"]:checked');

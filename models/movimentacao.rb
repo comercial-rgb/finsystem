@@ -369,13 +369,15 @@ module FinSystem
       def self.confirmar(id)
         mov = find(id)
         return unless mov
+        hoje = Date.today
         table.where(id: id).update(
           status: 'confirmado',
           pago: true,
+          data_movimentacao: hoje,
           updated_at: Time.now
         )
         atualizar_saldo_conta(mov[:conta_bancaria_id])
-        registrar_historico_saldo(mov[:conta_bancaria_id], mov[:data_movimentacao], 'confirmacao', id, mov[:descricao])
+        registrar_historico_saldo(mov[:conta_bancaria_id], hoje, 'confirmacao', id, mov[:descricao])
       end
 
       # ========================================
