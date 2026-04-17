@@ -19,7 +19,7 @@
       </div>
       <span class="text-xs font-semibold text-slate-500 uppercase">Recebimentos</span>
     </div>
-    <p class="text-lg font-bold text-emerald-600"><%= fmt_moeda(@resumo[:financeiro][:total_recebimentos]) %></p>
+    <p class="text-lg font-bold text-emerald-600"><%= fmt_moeda(@resumo.dig(:financeiro, :total_recebimentos) || 0) %></p>
   </div>
 
   <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
@@ -29,7 +29,7 @@
       </div>
       <span class="text-xs font-semibold text-slate-500 uppercase">NF Abertas</span>
     </div>
-    <p class="text-lg font-bold text-amber-600"><%= @resumo[:financeiro][:nf_clientes_abertas] + @resumo[:financeiro][:nf_fornecedores_abertas] %></p>
+    <p class="text-lg font-bold text-amber-600"><%= (@resumo.dig(:financeiro, :nf_clientes_abertas) || 0) + (@resumo.dig(:financeiro, :nf_fornecedores_abertas) || 0) %></p>
   </div>
 
   <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
@@ -39,7 +39,7 @@
       </div>
       <span class="text-xs font-semibold text-slate-500 uppercase">Parceiros</span>
     </div>
-    <p class="text-lg font-bold text-blue-600"><%= @resumo[:parceiros][:credenciados] %>/<%= @resumo[:parceiros][:total] %></p>
+    <p class="text-lg font-bold text-blue-600"><%= @resumo.dig(:parceiros, :credenciados) || 0 %>/<%= @resumo.dig(:parceiros, :total) || 0 %></p>
   </div>
 
   <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
@@ -49,7 +49,7 @@
       </div>
       <span class="text-xs font-semibold text-slate-500 uppercase">Comercial</span>
     </div>
-    <p class="text-lg font-bold text-indigo-600"><%= @resumo[:comercial][:sucesso] %>/<%= @resumo[:comercial][:total] %></p>
+    <p class="text-lg font-bold text-indigo-600"><%= @resumo.dig(:comercial, :sucesso) || 0 %>/<%= @resumo.dig(:comercial, :total) || 0 %></p>
   </div>
 
   <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
@@ -59,7 +59,7 @@
       </div>
       <span class="text-xs font-semibold text-slate-500 uppercase">Licitações</span>
     </div>
-    <p class="text-lg font-bold text-purple-600"><%= @resumo[:licitacoes][:ganhas] %>/<%= @resumo[:licitacoes][:total] %></p>
+    <p class="text-lg font-bold text-purple-600"><%= @resumo.dig(:licitacoes, :ganhas) || 0 %>/<%= @resumo.dig(:licitacoes, :total) || 0 %></p>
   </div>
 
   <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
@@ -69,7 +69,7 @@
       </div>
       <span class="text-xs font-semibold text-slate-500 uppercase">Chamados</span>
     </div>
-    <p class="text-lg font-bold text-rose-600"><%= @resumo[:operacoes][:chamados_abertos] %></p>
+    <p class="text-lg font-bold text-rose-600"><%= @resumo.dig(:operacoes, :chamados_abertos) || 0 %></p>
   </div>
 </div>
 

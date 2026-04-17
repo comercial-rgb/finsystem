@@ -64,6 +64,7 @@ module FinSystem
 
       # Verificar se tem permissão
       def self.tem_permissao?(user, nivel_requerido)
+        return false unless user
         niveis = Config::ACCESS_LEVELS
         return false unless niveis[user[:nivel_acesso]] && niveis[nivel_requerido]
 

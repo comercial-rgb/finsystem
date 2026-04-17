@@ -367,7 +367,7 @@ module FinSystem
       # ========================================
       get '/api/consultar_cnpj/:cnpj' do
         content_type :json
-        halt 401, { error: 'Não autorizado' }.to_json unless session[:usuario_id]
+        halt 401, { error: 'Não autorizado' }.to_json unless usuario_logado
         cnpj = params[:cnpj]&.gsub(/\D/, '')
         halt 422, { success: false, message: 'CNPJ inválido' }.to_json unless cnpj&.length == 14
 

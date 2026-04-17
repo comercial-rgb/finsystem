@@ -40,13 +40,13 @@ module FinSystem
           end
         end
 
-        @resultado = @resumo[:total_receitas] + @resumo[:lucro_antecipacoes] - @resumo[:total_despesas]
-        @saldos = Models::Movimentacao.saldo_por_conta(@empresa_id)
+        @resultado = (@resumo[:total_receitas] || 0) + (@resumo[:lucro_antecipacoes] || 0) - (@resumo[:total_despesas] || 0)
+        @saldos = Models::Movimentacao.saldo_por_conta(@empresa_id) || []
 
         # Últimas movimentações
         filtros = { mes: @mes, ano: @ano }
         filtros[:empresa_id] = @empresa_id if @empresa_id && !@empresa_id.empty?
-        @ultimas_movimentacoes = Models::Movimentacao.listar(filtros).first(10)
+        @ultimas_movimentacoes = Models::Movimentacao.listar(filtros).first(10) || []
 
         # Dados para gráficos
         @evolucao = _dados_evolucao(@empresa_id)

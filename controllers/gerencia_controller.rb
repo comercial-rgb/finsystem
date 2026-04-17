@@ -24,30 +24,30 @@ module FinSystem
         @resumo = Models::Gerencia.resumo_geral
 
         # Financeiro
-        @recebimentos = Models::Gerencia.listar_recebimentos(frente: params[:frente])
-        @nf_clientes = Models::Gerencia.listar_nf_clientes(status: params[:nf_status])
-        @nf_fornecedores = Models::Gerencia.listar_nf_fornecedores(status: params[:nf_forn_status])
-        @nf_pagas = Models::Gerencia.listar_nf_pagas
+        @recebimentos = Models::Gerencia.listar_recebimentos(frente: params[:frente]) rescue []
+        @nf_clientes = Models::Gerencia.listar_nf_clientes(status: params[:nf_status]) rescue []
+        @nf_fornecedores = Models::Gerencia.listar_nf_fornecedores(status: params[:nf_forn_status]) rescue []
+        @nf_pagas = Models::Gerencia.listar_nf_pagas rescue []
 
         # Parceiros
-        @parceiros = Models::Gerencia.listar_parceiros(status: params[:parc_status])
-        @resumo_parceiros = Models::Gerencia.resumo_parceiros
+        @parceiros = Models::Gerencia.listar_parceiros(status: params[:parc_status]) rescue []
+        @resumo_parceiros = Models::Gerencia.resumo_parceiros rescue { total: 0, credenciados: 0, contatados: 0, aguardando: 0, fracassados: 0, em_analise: 0 }
 
         # Comercial
-        @comercial = Models::Gerencia.listar_comercial(status: params[:com_status])
-        @resumo_comercial = Models::Gerencia.resumo_comercial
+        @comercial = Models::Gerencia.listar_comercial(status: params[:com_status]) rescue []
+        @resumo_comercial = Models::Gerencia.resumo_comercial rescue { total: 0, sucesso: 0, contatados: 0, aguardando: 0, fracassados: 0, em_andamento: 0 }
 
         # Redes Sociais
-        @redes_sociais = Models::Gerencia.listar_redes_sociais(plataforma: params[:plataforma])
+        @redes_sociais = Models::Gerencia.listar_redes_sociais(plataforma: params[:plataforma]) rescue []
 
         # Licitações
-        @licitacoes = Models::Gerencia.listar_licitacoes(status: params[:lic_status])
-        @resumo_licitacoes = Models::Gerencia.resumo_licitacoes
+        @licitacoes = Models::Gerencia.listar_licitacoes(status: params[:lic_status]) rescue []
+        @resumo_licitacoes = Models::Gerencia.resumo_licitacoes rescue { total: 0, ganhas: 0, inseridas: 0, cadastradas: 0, andamento: 0, finalizadas: 0, em_andamento: 0 }
 
         # Operações
-        @treinamentos = Models::Gerencia.listar_treinamentos
-        @chamados = Models::Gerencia.listar_chamados(solucao: params[:ch_solucao], status: params[:ch_status])
-        @melhorias = Models::Gerencia.listar_melhorias
+        @treinamentos = Models::Gerencia.listar_treinamentos rescue []
+        @chamados = Models::Gerencia.listar_chamados(solucao: params[:ch_solucao], status: params[:ch_status]) rescue []
+        @melhorias = Models::Gerencia.listar_melhorias rescue []
 
         erb :'gerencia/index', layout: :'layouts/application'
       end

@@ -167,7 +167,7 @@ module FinSystem
       # ========================================
       get '/api/fornecedores/buscar_documento' do
         content_type :json
-        halt 401, { error: 'Não autorizado' }.to_json unless session[:usuario_id]
+        halt 401, { error: 'Não autorizado' }.to_json unless usuario_logado
         doc = params[:documento]&.gsub(/\D/, '')
         return { success: false, message: 'Documento não informado' }.to_json if doc.nil? || doc.empty?
 
@@ -191,7 +191,7 @@ module FinSystem
       # Criar fornecedor inline via JSON
       post '/api/fornecedores/criar_rapido' do
         content_type :json
-        halt 401, { error: 'Não autorizado' }.to_json unless session[:usuario_id]
+        halt 401, { error: 'Não autorizado' }.to_json unless usuario_logado
         begin
           dados = JSON.parse(request.body.read, symbolize_names: true)
 

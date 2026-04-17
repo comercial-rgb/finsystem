@@ -19,14 +19,14 @@ module FinSystem
         @page = (params[:page] || 1).to_i
         @per_page = 20
 
-        @resumo = Models::Pessoal.resumo(usuario_logado[:id], @mes, @ano)
+        @resumo = Models::Pessoal.resumo(usuario_logado[:id], @mes, @ano) || {}
         all_movimentacoes = Models::Pessoal.listar_movimentacoes(
           usuario_logado[:id], { mes: @mes, ano: @ano }
-        )
-        @categorias = Models::Pessoal.categorias(usuario_logado[:id])
+        ) || []
+        @categorias = Models::Pessoal.categorias(usuario_logado[:id]) || []
 
         # Contas bancárias pessoais
-        @contas = Models::Pessoal.saldo_por_conta_pessoal(usuario_logado[:id])
+        @contas = Models::Pessoal.saldo_por_conta_pessoal(usuario_logado[:id]) || []
 
         # Paginação
         @total_registros = all_movimentacoes.size

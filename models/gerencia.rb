@@ -456,18 +456,18 @@ module FinSystem
         db = Database.db
         {
           financeiro: {
-            total_recebimentos: (db[:gerencia_recebimentos].sum(:valor) || 0).to_f,
-            nf_clientes_abertas: db[:gerencia_nf_clientes].where(status: 'aberta').count,
-            nf_fornecedores_abertas: db[:gerencia_nf_fornecedores].where(status: 'aberta').count,
-            nf_pagas: db[:gerencia_nf_pagas].count
+            total_recebimentos: (db[:gerencia_recebimentos].sum(:valor) rescue 0) || 0,
+            nf_clientes_abertas: (db[:gerencia_nf_clientes].where(status: 'aberta').count rescue 0),
+            nf_fornecedores_abertas: (db[:gerencia_nf_fornecedores].where(status: 'aberta').count rescue 0),
+            nf_pagas: (db[:gerencia_nf_pagas].count rescue 0)
           },
-          parceiros: resumo_parceiros,
-          comercial: resumo_comercial,
-          licitacoes: resumo_licitacoes,
+          parceiros: (resumo_parceiros rescue { total: 0, credenciados: 0, contatados: 0, aguardando: 0, fracassados: 0 }),
+          comercial: (resumo_comercial rescue { total: 0, sucesso: 0, contatados: 0, aguardando: 0, fracassados: 0 }),
+          licitacoes: (resumo_licitacoes rescue { total: 0, ganhas: 0, inseridas: 0, cadastradas: 0, andamento: 0, finalizadas: 0 }),
           operacoes: {
-            treinamentos: db[:gerencia_treinamentos].count,
-            chamados_abertos: db[:gerencia_chamados].where(status: 'aberto').count,
-            melhorias: db[:gerencia_melhorias].count
+            treinamentos: (db[:gerencia_treinamentos].count rescue 0),
+            chamados_abertos: (db[:gerencia_chamados].where(status: 'aberto').count rescue 0),
+            melhorias: (db[:gerencia_melhorias].count rescue 0)
           }
         }
       end

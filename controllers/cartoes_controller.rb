@@ -58,8 +58,8 @@ module FinSystem
         @fatura = Models::CartaoCredito.fatura_find(params[:id].to_i)
         halt 404 unless @fatura
 
-        @despesas = Models::CartaoCredito.despesas_fatura(@fatura[:id])
-        @categorias = FinSystem::Database.db[:categorias].where(tipo: 'despesa', ativo: true).all
+        @despesas = Models::CartaoCredito.despesas_fatura(@fatura[:id]) || []
+        @categorias = FinSystem::Database.db[:categorias].where(tipo: 'despesa', ativo: true).all || []
 
         erb :'cartoes/fatura', layout: :'layouts/application'
       end
@@ -129,9 +129,9 @@ module FinSystem
       # CARTÕES PESSOAIS
       # ========================================
       get '/pessoal/cartoes' do
-        @cartoes = Models::CartaoCredito.pessoal_resumo_cartoes(usuario_logado[:id])
-        @faturas_proximas = Models::CartaoCredito.pessoal_faturas_proximas(usuario_logado[:id])
-        @categorias = Models::Pessoal.categorias(usuario_logado[:id])
+        @cartoes = Models::CartaoCredito.pessoal_resumo_cartoes(usuario_logado[:id]) || []
+        @faturas_proximas = Models::CartaoCredito.pessoal_faturas_proximas(usuario_logado[:id]) || []
+        @categorias = Models::Pessoal.categorias(usuario_logado[:id]) || []
 
         erb :'pessoal/cartoes', layout: :'layouts/application'
       end
@@ -198,8 +198,8 @@ module FinSystem
         @fatura = FinSystem::Database.db[:pessoal_faturas].where(id: params[:id].to_i).first
         halt 404 unless @fatura
 
-        @despesas = Models::CartaoCredito.pessoal_despesas_fatura(@fatura[:id])
-        @categorias = Models::Pessoal.categorias(usuario_logado[:id])
+        @despesas = Models::CartaoCredito.pessoal_despesas_fatura(@fatura[:id]) || []
+        @categorias = Models::Pessoal.categorias(usuario_logado[:id]) || []
 
         erb :'pessoal/fatura', layout: :'layouts/application'
       end
