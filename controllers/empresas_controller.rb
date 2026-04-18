@@ -38,7 +38,7 @@ module FinSystem
         @mes = (params[:mes] || Date.today.month).to_i
         @ano = (params[:ano] || Date.today.year).to_i
         @resumo = Models::Movimentacao.resumo_mensal(params[:id], @mes, @ano) || {}
-        @resultado = (@resumo[:total_receitas] || 0) - (@resumo[:total_despesas] || 0)
+        @resultado = (@resumo[:total_receitas] || 0) - (@resumo[:despesas_operacionais] || 0)
 
         # Distribuição de lucros
         @distribuicao = Models::Empresa.distribuicao_lucro(params[:id].to_i, @resultado > 0 ? @resultado : 0)

@@ -67,17 +67,18 @@
     <p class="text-xs text-slate-400 mt-1">Lucro sobre faturamento</p>
   </div>
 
-  <!-- Total Despesas -->
+  <!-- Despesas Operacionais (sem repasses) -->
   <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
     <div class="flex items-center justify-between mb-3">
-      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Despesas</span>
+      <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Despesas Operac.</span>
       <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
         <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/>
         </svg>
       </div>
     </div>
-    <p class="text-2xl font-bold text-red-600"><%= fmt_moeda(@resumo[:total_despesas]) %></p>
+    <p class="text-2xl font-bold text-red-600"><%= fmt_moeda(@resumo[:despesas_operacionais] || 0) %></p>
+    <p class="text-xs text-slate-400 mt-1">Repasses: <%= fmt_moeda(@resumo[:total_repasses] || 0) %></p>
   </div>
 
   <!-- Resultado -->

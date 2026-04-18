@@ -26,13 +26,16 @@ module FinSystem
           @empresa_selecionada = Models::Empresa.find(@empresa_id.to_i)
         else
           # Consolidado de todas as empresas
-          @resumo = { faturamento_bruto: 0, total_receitas: 0, total_despesas: 0,
+          @resumo = { faturamento_bruto: 0, total_receitas: 0, total_repasses: 0,
+                      despesas_operacionais: 0, total_despesas: 0,
                       total_antecipacoes: 0, lucro_antecipacoes: 0, qtd_movimentacoes: 0,
                       por_categoria: [], por_banco: [] }
           @empresas.each do |emp|
             r = Models::Movimentacao.resumo_mensal(emp[:id], @mes, @ano)
             @resumo[:faturamento_bruto] += r[:faturamento_bruto]
             @resumo[:total_receitas] += r[:total_receitas]
+            @resumo[:total_repasses] += (r[:total_repasses] || 0)
+            @resumo[:despesas_operacionais] += (r[:despesas_operacionais] || 0)
             @resumo[:total_despesas] += r[:total_despesas]
             @resumo[:total_antecipacoes] += r[:total_antecipacoes]
             @resumo[:lucro_antecipacoes] += r[:lucro_antecipacoes]
@@ -40,7 +43,8 @@ module FinSystem
           end
         end
 
-        @resultado = (@resumo[:total_receitas] || 0) + (@resumo[:lucro_antecipacoes] || 0) - (@resumo[:total_despesas] || 0)
+        # Resultado = Receita (lucro/margem) + Lucro Antecipações - Despesas Operacionais (sem repasses)
+        @resultado = (@resumo[:total_receitas] || 0) + (@resumo[:lucro_antecipacoes] || 0) - (@resumo[:despesas_operacionais] || 0)
         @saldos = Models::Movimentacao.saldo_por_conta(@empresa_id) || []
 
         # Últimas movimentações
@@ -72,7 +76,7 @@ module FinSystem
           base = db[:movimentacoes].where(data_movimentacao: inicio..fim, status: %w[confirmado conciliado pendente]).exclude(tipo_operacao: 'transferencia')
           base = base.where(empresa_id: empresa_id.to_i) if empresa_id && !empresa_id.to_s.empty?
           rec = (base.where(tipo: 'receita').exclude(is_antecipacao: true).sum(:lucro) || 0).to_f
-          desp = (base.where(tipo: 'despesa').exclude(is_antecipacao: true).sum(:valor_bruto) || 0).to_f
+          desp = (base.where(tipo: 'despesa').exclude(is_antecipacao: true).exclude(tipo_operacao: 'repasse').sum(:valor_bruto) || 0).to_f
           resultado.unshift({ mes: "#{nome_mes(d.month)[0..2]}/#{d.year}", receitas: rec, despesas: desp, resultado: rec - desp })
         end
         resultado

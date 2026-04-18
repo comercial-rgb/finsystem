@@ -262,12 +262,16 @@ module FinSystem
 
         receitas_normais = base.where(Sequel[:movimentacoes][:tipo] => 'receita').exclude(Sequel[:movimentacoes][:is_antecipacao] => true)
         despesas_normais = base.where(Sequel[:movimentacoes][:tipo] => 'despesa').exclude(Sequel[:movimentacoes][:is_antecipacao] => true)
+        repasses = despesas_normais.where(Sequel[:movimentacoes][:tipo_operacao] => 'repasse')
+        despesas_operacionais = despesas_normais.exclude(Sequel[:movimentacoes][:tipo_operacao] => 'repasse')
         antecipacoes_despesa = base.where(Sequel[:movimentacoes][:is_antecipacao] => true, Sequel[:movimentacoes][:tipo] => 'despesa')
         antecipacoes_receita = base.where(Sequel[:movimentacoes][:is_antecipacao] => true, Sequel[:movimentacoes][:tipo] => 'receita')
 
         {
           faturamento_bruto: receitas_normais.sum(:valor_bruto) || 0,
           total_receitas: receitas_normais.sum(:lucro) || 0,
+          total_repasses: repasses.sum(:valor_bruto) || 0,
+          despesas_operacionais: despesas_operacionais.sum(:valor_bruto) || 0,
           total_despesas: despesas_normais.sum(:valor_bruto) || 0,
           total_antecipacoes: antecipacoes_despesa.sum(:valor_bruto) || 0,
           lucro_antecipacoes: antecipacoes_receita.sum(:valor_bruto) || 0,
