@@ -345,6 +345,7 @@
           <select name="status" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
             <option value="confirmado">Confirmado</option>
             <option value="pendente">Pendente</option>
+            <option value="cancelado">Cancelado</option>
           </select>
         </div>
       </div>
@@ -390,6 +391,9 @@ var tipoOperacaoOpcoes = {
     { group: '💰 Receitas', options: [
       { value: 'faturamento', label: 'Faturamento de Cliente' },
       { value: 'comissao', label: 'Comissão / Taxa de Serviço' },
+      { value: 'reembolso', label: 'Reembolso / Devolução' },
+      { value: 'juros_recebidos', label: 'Juros / Rendimentos Recebidos' },
+      { value: 'transferencia_interna', label: 'Transferência entre Contas' },
       { value: 'outros_receita', label: 'Outras Receitas' }
     ]}
   ],
@@ -419,6 +423,15 @@ var tipoOperacaoOpcoes = {
       { value: 'boleto', label: 'Boleto - Geral' },
       { value: 'taxa_bancaria', label: 'Taxa Bancária' },
       { value: 'seguro', label: 'Seguro' }
+    ]},
+    { group: '💳 Banco e Empréstimos', options: [
+      { value: 'emprestimo', label: 'Empréstimo / Parcela de Empréstimo' },
+      { value: 'financiamento', label: 'Financiamento' },
+      { value: 'juros_bancarios', label: 'Juros Bancários' },
+      { value: 'iof', label: 'IOF' },
+      { value: 'multa_bancaria', label: 'Multa Bancária' },
+      { value: 'amortizacao', label: 'Amortização de Dívida' },
+      { value: 'cheque_especial', label: 'Cheque Especial' }
     ]},
     { group: '👤 Sócios', options: [
       { value: 'retirada_socio', label: 'Retirada de Sócio' },

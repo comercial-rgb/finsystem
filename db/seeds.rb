@@ -116,7 +116,10 @@ module FinSystem
         { nome: 'Serviços Automotivos (US)', subtipo: 'servico_auto', cor: '#f59e0b' },
         { nome: 'Licenciamento SaaS', subtipo: 'saas', cor: '#ec4899' },
         { nome: 'Licitação Pública', subtipo: 'licitacao', cor: '#14b8a6' },
-        { nome: 'Outras Receitas', subtipo: 'outros', cor: '#6b7280' }
+        { nome: 'Reembolso / Devolução', subtipo: 'reembolso', cor: '#34d399' },
+        { nome: 'Juros / Rendimentos Recebidos', subtipo: 'juros_recebidos', cor: '#22c55e' },
+        { nome: 'Transferência entre Contas', subtipo: 'transferencia_interna', cor: '#60a5fa' },
+        { nome: 'Outras Receitas', subtipo: 'outros_receita', cor: '#6b7280' }
       ]
 
       categorias_despesa = [
@@ -134,6 +137,13 @@ module FinSystem
         { nome: 'Viagem / Deslocamento', subtipo: 'viagem', cor: '#0d9488' },
         { nome: 'Material / Suprimentos', subtipo: 'material', cor: '#ca8a04' },
         { nome: 'Software / Licenças', subtipo: 'software', cor: '#7c3aed' },
+        { nome: 'Empréstimo / Parcela', subtipo: 'emprestimo', cor: '#1d4ed8' },
+        { nome: 'Financiamento', subtipo: 'financiamento', cor: '#2563eb' },
+        { nome: 'Juros Bancários', subtipo: 'juros_bancarios', cor: '#3b82f6' },
+        { nome: 'IOF', subtipo: 'iof', cor: '#60a5fa' },
+        { nome: 'Multa Bancária', subtipo: 'multa_bancaria', cor: '#7c3aed' },
+        { nome: 'Amortização de Dívida', subtipo: 'amortizacao', cor: '#4338ca' },
+        { nome: 'Cheque Especial', subtipo: 'cheque_especial', cor: '#6d28d9' },
         { nome: 'Outras Despesas', subtipo: 'outros', cor: '#9ca3af' }
       ]
 
