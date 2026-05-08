@@ -109,7 +109,48 @@ module FinSystem
         FinSystem::Database.db[:contas_bancarias].where(id: params[:id].to_i).update(
           saldo_inicial: BigDecimal(saldo_str.gsub('.', '').gsub(',', '.'))
         )
+        Models::Movimentacao.atualizar_saldo_conta(params[:id].to_i)
         session[:flash_message] = 'Saldo inicial atualizado!'
+        redirect back
+      end
+
+      # Calibrar saldo: dado o saldo real de hoje, recalcula saldo_inicial
+      # para que saldo_inicial + movimentações = saldo_real_hoje
+      post '/contas/:id/calibrar-saldo' do
+        db  = FinSystem::Database.db
+        id  = params[:id].to_i
+        conta = db[:contas_bancarias].where(id: id).first
+        halt 404, 'Conta não encontrada' unless conta
+
+        saldo_real_str = params[:saldo_real_hoje].to_s.strip.gsub('.', '').gsub(',', '.')
+        saldo_real = BigDecimal(saldo_real_str)
+
+        # Soma de entradas e saídas das movimentações confirmadas
+        movs = db[:movimentacoes].where(
+          conta_bancaria_id: id,
+          status: %w[confirmado conciliado transferencia]
+        )
+        entradas = movs.where(tipo: 'receita').sum(:valor_bruto) || 0
+        saidas   = movs.where(tipo: 'despesa').sum(:valor_bruto) || 0
+
+        # saldo_inicial = saldo_real - entradas + saidas
+        novo_saldo_inicial = saldo_real - entradas + saidas
+
+        db[:contas_bancarias].where(id: id).update(
+          saldo_inicial: novo_saldo_inicial,
+          saldo_atual:   saldo_real
+        )
+
+        Models::AuditLog.registrar(
+          usuario_id: usuario_logado[:id],
+          acao: 'update',
+          entidade: 'conta_bancaria',
+          entidade_id: id,
+          detalhes: "Calibração de saldo: real=#{saldo_real}, novo saldo_inicial=#{novo_saldo_inicial}",
+          ip: request.ip
+        )
+
+        session[:flash_message] = "Saldo calibrado! Saldo inicial ajustado para #{fmt_moeda(novo_saldo_inicial)} para bater com o saldo real de #{fmt_moeda(saldo_real)}."
         redirect back
       end
     end
