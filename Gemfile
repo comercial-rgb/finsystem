@@ -24,6 +24,9 @@ gem 'logger', '~> 1.6'
 gem 'dotenv', '~> 3.0'
 gem 'chartkick', '~> 5.0'
 gem 'ostruct'             # Requerido explicitamente a partir do Ruby 3.5
+gem 'csv', '~> 3.3'       # CSV explícito para Ruby 3.4+
+gem 'roo', '~> 2.10'      # Leitura de XLSX/XLS para importação de extratos
+gem 'pdf-reader', '~> 2.12' # Leitura de PDF para importação de extratos
 
 group :development do
   gem 'rerun', '~> 0.14'

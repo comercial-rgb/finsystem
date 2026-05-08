@@ -33,6 +33,7 @@ require_relative 'models/gerencia'
 require_relative 'services/validation'
 require_relative 'services/recorrencia'
 require_relative 'services/relatorio'
+require_relative 'services/extrato_parser'
 
 require_relative 'controllers/auth_controller'
 require_relative 'controllers/dashboard_controller'
@@ -48,6 +49,7 @@ require_relative 'controllers/despesas_controller'
 require_relative 'controllers/fluxo_caixa_controller'
 require_relative 'controllers/api_controller'
 require_relative 'controllers/gerencia_controller'
+require_relative 'controllers/importacao_controller'
 
 module FinSystem
   # ========================================
@@ -157,6 +159,7 @@ module FinSystem
     use Controllers::DespesasController
     use Controllers::FluxoCaixaController
     use Controllers::GerenciaController
+    use Controllers::ImportacaoController
     use Controllers::ApiController
 
     # ========================================

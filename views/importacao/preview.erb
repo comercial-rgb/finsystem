@@ -1,0 +1,207 @@
+<!-- views/importacao/preview.erb - Revisão das transações antes de importar -->
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Revisar Transações</h1>
+    <p class="text-slate-500 text-sm mt-1">
+      Arquivo: <span class="font-medium text-slate-700"><%= @arquivo_nome %></span>
+      &nbsp;·&nbsp; Conta: <span class="font-medium text-slate-700"><%= @conta_info ? "#{@conta_info[:banco]}#{@conta_info[:apelido] ? ' — ' + @conta_info[:apelido] : ''}" : @conta_id %></span>
+    </p>
+  </div>
+  <a href="/importacao" class="px-4 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Novo Upload
+  </a>
+</div>
+
+<!-- Resumo -->
+<%
+  total = @transacoes.size
+  duplicatas = @transacoes.count { |t| t[:duplicata] }
+  novas = total - duplicatas
+  total_receitas = @transacoes.select { |t| t[:tipo] == 'receita' && !t[:duplicata] }.sum { |t| t[:valor] }
+  total_despesas = @transacoes.select { |t| t[:tipo] == 'despesa' && !t[:duplicata] }.sum { |t| t[:valor] }
+%>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">Total encontrado</p>
+    <p class="text-2xl font-bold text-slate-800 mt-1"><%= total %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">Novas</p>
+    <p class="text-2xl font-bold text-emerald-600 mt-1"><%= novas %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">Possíveis duplicatas</p>
+    <p class="text-2xl font-bold text-amber-500 mt-1"><%= duplicatas %></p>
+  </div>
+  <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+    <p class="text-xs text-slate-500 uppercase tracking-wide">Saldo líquido</p>
+    <p class="text-2xl font-bold <%= total_receitas - total_despesas >= 0 ? 'text-emerald-600' : 'text-red-500' %> mt-1">
+      <%= formatar_moeda(total_receitas - total_despesas) %>
+    </p>
+  </div>
+</div>
+
+<form method="POST" action="/importacao/confirmar" id="form-import">
+  <input type="hidden" name="token" value="<%= @token %>">
+
+  <!-- Opções globais -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-4 flex flex-wrap gap-4 items-end">
+    <div>
+      <label class="block text-xs font-medium text-slate-600 mb-1">Categoria padrão</label>
+      <select name="categoria_id" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+        <option value="">Sem categoria</option>
+        <% @categorias.each do |cat| %>
+          <option value="<%= cat[:id] %>"><%= cat[:nome] %></option>
+        <% end %>
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-slate-600 mb-1">Status ao importar</label>
+      <select name="status_import" class="px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm">
+        <option value="confirmado">Confirmado</option>
+        <option value="pendente">Pendente</option>
+        <option value="conciliado">Conciliado</option>
+      </select>
+    </div>
+    <div class="flex gap-2 ml-auto">
+      <button type="button" onclick="selecionarTodos(true)"
+        class="px-3 py-2 text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition">
+        Marcar todos
+      </button>
+      <button type="button" onclick="selecionarTodos(false)"
+        class="px-3 py-2 text-xs bg-slate-50 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-100 transition">
+        Desmarcar todos
+      </button>
+      <button type="button" onclick="selecionarSemDuplicatas()"
+        class="px-3 py-2 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition">
+        Apenas novas
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabela de transações -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-200">
+          <tr>
+            <th class="px-4 py-3 text-left w-8">
+              <input type="checkbox" id="check-all" class="rounded" onchange="toggleAll(this)" checked>
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Data</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Descrição</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Tipo</th>
+            <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Valor</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Categoria</th>
+            <th class="px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <% @transacoes.each do |t| %>
+            <%
+              row_class = t[:duplicata] ? 'bg-amber-50/50' : ''
+              checked   = t[:importar]
+            %>
+            <tr class="<%= row_class %> hover:bg-slate-50 transition" id="row-<%= t[:idx] %>">
+              <td class="px-4 py-3">
+                <input type="checkbox" name="importar[]" value="<%= t[:idx] %>"
+                  id="check-<%= t[:idx] %>"
+                  class="rounded row-check"
+                  data-duplicata="<%= t[:duplicata] %>"
+                  <%= checked ? 'checked' : '' %>>
+              </td>
+              <td class="px-4 py-3 text-slate-700 font-mono text-xs whitespace-nowrap">
+                <%= t[:data].is_a?(Date) ? t[:data].strftime('%d/%m/%Y') : t[:data].to_s.gsub('-', '/').split('/').reverse.join('/') rescue t[:data] %>
+              </td>
+              <td class="px-4 py-3 text-slate-800 max-w-xs">
+                <span class="block truncate" title="<%= t[:descricao] %>"><%= t[:descricao] %></span>
+              </td>
+              <td class="px-4 py-3">
+                <% if t[:tipo] == 'receita' %>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Receita</span>
+                <% else %>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Despesa</span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-right font-semibold <%= t[:tipo] == 'receita' ? 'text-emerald-600' : 'text-red-500' %> whitespace-nowrap">
+                <%= formatar_moeda(t[:valor]) %>
+              </td>
+              <td class="px-4 py-3">
+                <select name="categoria_linha[<%= t[:idx] %>]"
+                  class="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400">
+                  <option value="">Padrão</option>
+                  <% @categorias.each do |cat| %>
+                    <option value="<%= cat[:id] %>"><%= cat[:nome] %></option>
+                  <% end %>
+                </select>
+              </td>
+              <td class="px-4 py-3 text-center">
+                <% if t[:duplicata] %>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-100 text-amber-700" title="Já existe uma movimentação com mesma data e valor nesta conta">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    Duplicata?
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-emerald-100 text-emerald-700">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Nova
+                  </span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Botão confirmar -->
+  <div class="flex justify-end gap-3">
+    <a href="/importacao" class="px-6 py-3 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition">
+      Cancelar
+    </a>
+    <button type="submit" id="btn-confirmar"
+      class="px-8 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+      <span id="btn-texto">Importar Selecionadas (<span id="count-selecionadas"><%= @transacoes.count { |t| t[:importar] } %></span>)</span>
+    </button>
+  </div>
+</form>
+
+<script>
+function atualizarContador() {
+  const total = document.querySelectorAll('.row-check:checked').length;
+  document.getElementById('count-selecionadas').textContent = total;
+}
+
+function toggleAll(master) {
+  document.querySelectorAll('.row-check').forEach(cb => cb.checked = master.checked);
+  atualizarContador();
+}
+
+function selecionarTodos(val) {
+  document.querySelectorAll('.row-check').forEach(cb => cb.checked = val);
+  document.getElementById('check-all').checked = val;
+  atualizarContador();
+}
+
+function selecionarSemDuplicatas() {
+  document.querySelectorAll('.row-check').forEach(cb => {
+    cb.checked = cb.dataset.duplicata !== 'true';
+  });
+  document.getElementById('check-all').checked = false;
+  atualizarContador();
+}
+
+document.querySelectorAll('.row-check').forEach(cb => {
+  cb.addEventListener('change', atualizarContador);
+});
+
+document.getElementById('form-import').addEventListener('submit', function() {
+  const btn = document.getElementById('btn-confirmar');
+  btn.disabled = true;
+  document.getElementById('btn-texto').textContent = 'Importando...';
+});
+</script>
