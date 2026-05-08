@@ -41,6 +41,10 @@ module FinSystem
       # POST /api/movimentacoes
       # ========================================
       post '/api/movimentacoes' do
+        unless ENV.fetch('WEBHOOK_ATIVO', 'true') != 'false'
+          halt 503, { error: 'Webhook temporariamente desabilitado', code: 'WEBHOOK_DISABLED' }.to_json
+        end
+
         begin
           dados = JSON.parse(request.body.read, symbolize_names: true)
 

@@ -206,6 +206,25 @@ module FinSystem
         redirect '/movimentacoes'
       end
 
+      # Excluir em lote
+      post '/movimentacoes/excluir-em-lote' do
+        content_type :json
+        ids = Array(params[:ids]).map(&:to_i).select { |id| id > 0 }
+        halt 400, { error: 'Nenhum ID fornecido' }.to_json if ids.empty?
+
+        ids.each { |id| Models::Movimentacao.excluir(id) }
+
+        Models::AuditLog.registrar(
+          usuario_id: usuario_logado[:id],
+          acao: 'delete',
+          entidade: 'movimentacao',
+          detalhes: "Exclusão em lote: #{ids.length} registros (IDs: #{ids.join(', ')})",
+          ip: request.ip
+        )
+
+        { success: true, deleted: ids.length }.to_json
+      end
+
       # Excluir
       delete '/movimentacoes/:id' do
         Models::Movimentacao.excluir(params[:id].to_i)

@@ -25,6 +25,8 @@ services:
           property: connectionString
       - key: SESSION_SECRET
         sync: false  # Gerenciado manualmente no dashboard — não sobrescrever a cada sync
+      - key: WEBHOOK_ATIVO
+        value: "true"  # Mudar para "false" no dashboard do Render para pausar recebimento via API
       - key: FINSYSTEM_API_KEY
         value: finsystem_prod_api_key_2026_instasolutions
       - key: RAILS_MAX_THREADS
