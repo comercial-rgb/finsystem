@@ -223,6 +223,111 @@ module FinSystem
       end
 
       # ========================================
+      # BUSCA DE MOVIMENTAÇÕES PARA VINCULAÇÃO
+      # ========================================
+      get '/movimentacoes/buscar-para-vincular' do
+        content_type :json
+        halt 401 unless usuario_logado
+
+        db = FinSystem::Database.db
+        q     = params[:q].to_s.strip
+        excluir_id = params[:excluir_id].to_i
+
+        movs = db[:movimentacoes]
+          .left_join(:contas_bancarias, Sequel[:contas_bancarias][:id] => Sequel[:movimentacoes][:conta_bancaria_id])
+          .where(Sequel[:movimentacoes][:tipo] => 'receita')
+          .where(Sequel[:movimentacoes][:tipo_operacao] => nil)
+          .exclude(Sequel[:movimentacoes][:status] => ['transferencia','cancelado'])
+          .exclude(Sequel[:movimentacoes][:id] => excluir_id)
+
+        movs = movs.where(Sequel.like(Sequel[:movimentacoes][:descricao], "%#{q}%")) unless q.empty?
+
+        # Se passou valor, filtrar por valor próximo (±1%)
+        if params[:valor].to_f > 0
+          v = params[:valor].to_f
+          movs = movs.where(Sequel[:movimentacoes][:valor_bruto] => (v * 0.99)..(v * 1.01))
+        end
+
+        result = movs
+          .select_all(:movimentacoes)
+          .select_append(Sequel[:contas_bancarias][:banco].as(:banco_nome))
+          .select_append(Sequel[:contas_bancarias][:apelido].as(:conta_apelido))
+          .order(Sequel.desc(Sequel[:movimentacoes][:data_movimentacao]))
+          .limit(20)
+          .all
+          .map do |m|
+            { id: m[:id],
+              descricao: m[:descricao],
+              valor: m[:valor_bruto].to_f.round(2),
+              data: m[:data_movimentacao].to_s,
+              banco: [m[:banco_nome], m[:conta_apelido]].compact.join(' — ') }
+          end
+
+        result.to_json
+      end
+
+      # ========================================
+      # VINCULAR DUAS MOVIMENTAÇÕES COMO TRANSFERÊNCIA
+      # ========================================
+      post '/movimentacoes/:id/vincular-transferencia' do
+        content_type :json
+        db = FinSystem::Database.db
+        saida_id   = params[:id].to_i
+        entrada_id = params[:entrada_id].to_i
+
+        halt 422, { error: 'Informe a movimentação de entrada.' }.to_json if entrada_id == 0
+
+        saida  = Models::Movimentacao.find(saida_id)
+        entrada = Models::Movimentacao.find(entrada_id)
+
+        halt 404, { error: 'Movimentação de saída não encontrada.' }.to_json  unless saida
+        halt 404, { error: 'Movimentação de entrada não encontrada.' }.to_json unless entrada
+        halt 422, { error: 'A entrada deve ser do tipo receita.' }.to_json     unless entrada[:tipo] == 'receita'
+        halt 422, { error: 'Saída e entrada não podem ser da mesma conta.' }.to_json if saida[:conta_bancaria_id] == entrada[:conta_bancaria_id]
+
+        conta_origem  = db[:contas_bancarias].left_join(:empresas, Sequel[:empresas][:id] => Sequel[:contas_bancarias][:empresa_id]).where(Sequel[:contas_bancarias][:id] => saida[:conta_bancaria_id]).select_all(:contas_bancarias).select_append(Sequel[:empresas][:nome_fantasia].as(:empresa_nome)).first
+        conta_destino = db[:contas_bancarias].left_join(:empresas, Sequel[:empresas][:id] => Sequel[:contas_bancarias][:empresa_id]).where(Sequel[:contas_bancarias][:id] => entrada[:conta_bancaria_id]).select_all(:contas_bancarias).select_append(Sequel[:empresas][:nome_fantasia].as(:empresa_nome)).first
+
+        db.transaction do
+          db[:movimentacoes].where(id: saida_id).update(
+            tipo_operacao: 'transferencia',
+            status:        'transferencia',
+            descricao:     "Transferência para #{conta_destino[:banco]}#{conta_destino[:apelido] ? ' ('+conta_destino[:apelido]+')' : ''} - #{conta_destino[:empresa_nome]}",
+            pago:          true,
+            updated_at:    Time.now
+          )
+          db[:movimentacoes].where(id: entrada_id).update(
+            tipo_operacao: 'transferencia',
+            status:        'transferencia',
+            descricao:     "Transferência de #{conta_origem[:banco]}#{conta_origem[:apelido] ? ' ('+conta_origem[:apelido]+')' : ''} - #{conta_origem[:empresa_nome]}",
+            pago:          true,
+            updated_at:    Time.now
+          )
+          db[:transferencias].insert(
+            conta_origem_id:         saida[:conta_bancaria_id],
+            conta_destino_id:        entrada[:conta_bancaria_id],
+            usuario_id:              usuario_logado[:id],
+            valor:                   saida[:valor_bruto],
+            data_transferencia:      saida[:data_movimentacao],
+            descricao:               params[:descricao].to_s.strip.empty? ? "Transferência vinculada manualmente" : params[:descricao],
+            movimentacao_saida_id:   saida_id,
+            movimentacao_entrada_id: entrada_id
+          )
+          Models::Movimentacao.atualizar_saldo_conta(saida[:conta_bancaria_id])
+          Models::Movimentacao.atualizar_saldo_conta(entrada[:conta_bancaria_id])
+        end
+
+        Models::AuditLog.registrar(
+          usuario_id: usuario_logado[:id],
+          acao: 'update', entidade: 'transferencia',
+          detalhes: "Vinculação manual: saída ##{saida_id} ↔ entrada ##{entrada_id}",
+          ip: request.ip
+        )
+
+        { ok: true, message: 'Transferência vinculada! Saldos atualizados.' }.to_json
+      end
+
+      # ========================================
       # EDIÇÃO RÁPIDA (inline na tabela)
       # ========================================
       post '/movimentacoes/:id/quick-update' do

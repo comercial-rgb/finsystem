@@ -227,58 +227,102 @@
 
 <!-- Modal Converter para Transferência -->
 <div id="modal-transferencia" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
-  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4">
     <div class="p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold text-slate-800">Converter para Transferência</h3>
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">Registrar Transferência</h3>
+          <p class="text-sm text-slate-500 mt-0.5">Saída: <span id="modal-transf-valor" class="font-semibold text-slate-700"></span></p>
+        </div>
         <button onclick="fecharModalTransferencia()" class="p-1 text-slate-400 hover:text-slate-600">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
 
-      <div class="bg-teal-50 border border-teal-200 rounded-lg p-3 mb-4 text-sm text-teal-700">
-        A movimentação de saída será convertida para transferência e a <strong>entrada correspondente será criada automaticamente</strong> na conta de destino. Os saldos de ambas as contas serão recalculados.
+      <!-- Abas -->
+      <div class="flex border-b border-slate-200 mb-5">
+        <button onclick="abaTransf('vincular')" id="aba-vincular"
+          class="px-4 py-2.5 text-sm font-medium border-b-2 border-teal-500 text-teal-600 -mb-px transition">
+          Vincular com entrada existente
+        </button>
+        <button onclick="abaTransf('criar')" id="aba-criar"
+          class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 -mb-px transition">
+          Criar nova entrada
+        </button>
       </div>
 
-      <form method="POST" id="form-converter-transferencia" action="">
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Valor da transferência</label>
-            <p id="modal-transf-valor" class="text-xl font-bold text-slate-800"></p>
-          </div>
+      <!-- ABA: Vincular existente -->
+      <div id="painel-vincular">
+        <p class="text-xs text-slate-500 mb-3">Busque a receita já importada na conta de destino e vincule as duas como uma transferência. Nenhuma movimentação nova será criada.</p>
 
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Conta de destino <span class="text-red-500">*</span></label>
-            <select name="conta_destino_id" id="modal-transf-conta-destino" required
-              class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-              <option value="">Selecione a conta que recebeu</option>
-              <% @contas.each do |c| %>
-                <option value="<%= c[:id] %>" data-conta-id="<%= c[:id] %>">
-                  <%= c[:banco] %><%= c[:apelido] ? " — #{c[:apelido]}" : '' %> (<%= c[:empresa_nome] %>)
-                </option>
-              <% end %>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1.5">Descrição (opcional)</label>
-            <input type="text" name="descricao" placeholder="Ex: TED Sicredi — Caixa operacional"
-              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+        <div class="relative mb-3">
+          <input type="text" id="busca-entrada" placeholder="Buscar por descrição ou valor..."
+            class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+            oninput="buscarEntradas(this.value)">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <div id="busca-loading" class="hidden absolute right-3 top-3">
+            <svg class="w-4 h-4 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
           </div>
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
-          <button type="button" onclick="fecharModalTransferencia()"
-            class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition">
-            Cancelar
-          </button>
-          <button type="submit"
-            class="px-5 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-            Converter e criar entrada
+        <div id="lista-entradas" class="border border-slate-200 rounded-lg overflow-hidden max-h-52 overflow-y-auto text-sm">
+          <p class="text-slate-400 text-xs text-center py-6">Digite para buscar receitas disponíveis</p>
+        </div>
+
+        <input type="hidden" id="entrada-selecionada-id">
+        <div id="entrada-selecionada-info" class="hidden mt-3 p-3 bg-teal-50 border border-teal-200 rounded-lg text-sm">
+          <p class="text-teal-800 font-medium" id="entrada-selecionada-texto"></p>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-xs font-medium text-slate-600 mb-1">Descrição (opcional)</label>
+          <input type="text" id="vincular-descricao" placeholder="Ex: TED Itaú → Sicredi"
+            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+        </div>
+
+        <div class="flex justify-end gap-3 mt-5">
+          <button onclick="fecharModalTransferencia()" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Cancelar</button>
+          <button onclick="confirmarVincular()" id="btn-vincular"
+            class="px-5 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+            Vincular as duas
           </button>
         </div>
-      </form>
+      </div>
+
+      <!-- ABA: Criar nova entrada -->
+      <div id="painel-criar" class="hidden">
+        <p class="text-xs text-slate-500 mb-4">A entrada correspondente será criada automaticamente na conta de destino.</p>
+        <form method="POST" id="form-converter-transferencia" action="">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Conta de destino <span class="text-red-500">*</span></label>
+              <select name="conta_destino_id" id="modal-transf-conta-destino" required
+                class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                <option value="">Selecione a conta que recebeu</option>
+                <% @contas.each do |c| %>
+                  <option value="<%= c[:id] %>" data-conta-id="<%= c[:id] %>">
+                    <%= c[:banco] %><%= c[:apelido] ? " — #{c[:apelido]}" : '' %> (<%= c[:empresa_nome] %>)
+                  </option>
+                <% end %>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Descrição (opcional)</label>
+              <input type="text" name="descricao" placeholder="Ex: TED Sicredi — Caixa operacional"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 mt-5">
+            <button type="button" onclick="fecharModalTransferencia()" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200">Cancelar</button>
+            <button type="submit" class="px-5 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Criar entrada
+            </button>
+          </div>
+        </form>
+      </div>
+
     </div>
   </div>
 </div>
@@ -557,21 +601,33 @@ document.getElementById('detalhe-modal').addEventListener('click', function(e) {
   if (e.target === this) closeDetalheModal();
 });
 
+var _transfMovId = null;
+var _transfValor = null;
+var _transfContaOrigemId = null;
+var _buscaTimer = null;
+
 function abrirModalTransferencia(movId, contaOrigemId, valor) {
-  var form = document.getElementById('form-converter-transferencia');
-  form.action = '/movimentacoes/' + movId + '/converter-transferencia';
+  _transfMovId = movId;
+  _transfValor = parseFloat(valor);
+  _transfContaOrigemId = contaOrigemId;
 
-  // Exibir valor formatado
-  var valorNum = parseFloat(valor);
-  var valorFmt = 'R$ ' + valorNum.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  document.getElementById('modal-transf-valor').textContent = valorFmt;
+  document.getElementById('form-converter-transferencia').action = '/movimentacoes/' + movId + '/converter-transferencia';
+  document.getElementById('modal-transf-valor').textContent = 'R$ ' + _transfValor.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
 
-  // Ocultar conta de origem no select de destino
+  // Ocultar conta de origem no select de criar
   var select = document.getElementById('modal-transf-conta-destino');
-  Array.from(select.options).forEach(function(opt) {
-    opt.hidden = opt.value == contaOrigemId;
-  });
+  Array.from(select.options).forEach(function(opt) { opt.hidden = opt.value == contaOrigemId; });
   select.value = '';
+
+  // Reset aba vincular
+  document.getElementById('busca-entrada').value = '';
+  document.getElementById('lista-entradas').innerHTML = '<p class="text-slate-400 text-xs text-center py-6">Digite para buscar receitas disponíveis</p>';
+  document.getElementById('entrada-selecionada-id').value = '';
+  document.getElementById('entrada-selecionada-info').classList.add('hidden');
+  document.getElementById('btn-vincular').disabled = true;
+  document.getElementById('vincular-descricao').value = '';
+
+  abaTransf('vincular');
 
   var modal = document.getElementById('modal-transferencia');
   modal.classList.remove('hidden');
@@ -579,9 +635,91 @@ function abrirModalTransferencia(movId, contaOrigemId, valor) {
 }
 
 function fecharModalTransferencia() {
-  var modal = document.getElementById('modal-transferencia');
-  modal.classList.add('hidden');
-  modal.classList.remove('flex');
+  document.getElementById('modal-transferencia').classList.add('hidden');
+  document.getElementById('modal-transferencia').classList.remove('flex');
+}
+
+function abaTransf(aba) {
+  document.getElementById('painel-vincular').classList.toggle('hidden', aba !== 'vincular');
+  document.getElementById('painel-criar').classList.toggle('hidden', aba !== 'criar');
+  document.getElementById('aba-vincular').className = aba === 'vincular'
+    ? 'px-4 py-2.5 text-sm font-medium border-b-2 border-teal-500 text-teal-600 -mb-px transition'
+    : 'px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 -mb-px transition';
+  document.getElementById('aba-criar').className = aba === 'criar'
+    ? 'px-4 py-2.5 text-sm font-medium border-b-2 border-teal-500 text-teal-600 -mb-px transition'
+    : 'px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-700 -mb-px transition';
+}
+
+function buscarEntradas(q) {
+  clearTimeout(_buscaTimer);
+  _buscaTimer = setTimeout(function() {
+    document.getElementById('busca-loading').classList.remove('hidden');
+    var url = '/movimentacoes/buscar-para-vincular?excluir_id=' + _transfMovId + '&valor=' + _transfValor + '&q=' + encodeURIComponent(q);
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(items) {
+        document.getElementById('busca-loading').classList.add('hidden');
+        var lista = document.getElementById('lista-entradas');
+        if (!items.length) {
+          lista.innerHTML = '<p class="text-slate-400 text-xs text-center py-6">Nenhuma receita encontrada</p>';
+          return;
+        }
+        lista.innerHTML = items.map(function(m) {
+          var data = m.data.split('-').reverse().join('/');
+          var valor = parseFloat(m.valor).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+          return '<div class="flex items-center justify-between px-3 py-2.5 hover:bg-teal-50 cursor-pointer border-b border-slate-100 last:border-0" onclick="selecionarEntrada('+m.id+', this)">'
+            + '<div><p class="text-slate-800 text-xs font-medium truncate max-w-[260px]">'+m.descricao+'</p>'
+            + '<p class="text-slate-400 text-xs">'+m.banco+' &middot; '+data+'</p></div>'
+            + '<span class="text-emerald-600 font-semibold text-xs whitespace-nowrap ml-2">R$ '+valor+'</span>'
+            + '</div>';
+        }).join('');
+      })
+      .catch(function() { document.getElementById('busca-loading').classList.add('hidden'); });
+  }, 300);
+}
+
+function selecionarEntrada(id, el) {
+  document.getElementById('entrada-selecionada-id').value = id;
+  var descEl = el.querySelector('p');
+  document.getElementById('entrada-selecionada-texto').textContent = '✓ Selecionada: ' + (descEl ? descEl.textContent : '');
+  document.getElementById('entrada-selecionada-info').classList.remove('hidden');
+  document.getElementById('btn-vincular').disabled = false;
+  // Destacar linha
+  document.querySelectorAll('#lista-entradas > div').forEach(function(d) { d.classList.remove('bg-teal-100'); });
+  el.classList.add('bg-teal-100');
+}
+
+function confirmarVincular() {
+  var entradaId = document.getElementById('entrada-selecionada-id').value;
+  var descricao = document.getElementById('vincular-descricao').value;
+  if (!entradaId) return;
+
+  var btn = document.getElementById('btn-vincular');
+  btn.disabled = true;
+  btn.textContent = 'Vinculando...';
+
+  var fd = new FormData();
+  fd.append('entrada_id', entradaId);
+  fd.append('descricao', descricao);
+
+  fetch('/movimentacoes/' + _transfMovId + '/vincular-transferencia', { method: 'POST', body: fd })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        fecharModalTransferencia();
+        // Flash na página e reload para refletir mudanças de status
+        alert(data.message);
+        window.location.reload();
+      } else {
+        alert('Erro: ' + (data.error || 'Tente novamente'));
+        btn.disabled = false;
+        btn.textContent = 'Vincular as duas';
+      }
+    })
+    .catch(function() {
+      alert('Erro de comunicação. Tente novamente.');
+      btn.disabled = false;
+    });
 }
 
 document.getElementById('modal-transferencia').addEventListener('click', function(e) {
