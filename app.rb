@@ -97,6 +97,10 @@ module FinSystem
       disable :sessions
       set :session_store, Rack::Session::Cookie
 
+      # Desabilitar SessionHijacking do Rack::Protection — ele apaga a sessão ao detectar
+      # mudança de IP (troca de rede) ou User-Agent, causando logout aleatório durante navegação
+      set :protection, except: :session_hijacking
+
       # Garantir diretórios
       Config.ensure_directories
     end
