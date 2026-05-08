@@ -20,7 +20,7 @@ module FinSystem
     ].freeze
 
     # Sessão
-    SESSION_EXPIRY_HOURS = 24
+    SESSION_EXPIRY_HOURS = 720  # 30 dias
     SESSION_SECRET = begin
       require 'securerandom'
       require 'digest'

@@ -24,7 +24,7 @@ services:
           name: finsystem-db
           property: connectionString
       - key: SESSION_SECRET
-        generateValue: true
+        sync: false  # Gerenciado manualmente no dashboard — não sobrescrever a cada sync
       - key: FINSYSTEM_API_KEY
         value: finsystem_prod_api_key_2026_instasolutions
       - key: RAILS_MAX_THREADS
