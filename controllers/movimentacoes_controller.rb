@@ -238,6 +238,7 @@ module FinSystem
         update[:cliente_id]    = params[:cliente_id].to_s.strip.empty?   ? nil : params[:cliente_id].to_i    if params.key?('cliente_id')
         update[:fornecedor_id] = params[:fornecedor_id].to_s.strip.empty? ? nil : params[:fornecedor_id].to_i if params.key?('fornecedor_id')
         update[:socio_id]      = params[:socio_id].to_s.strip.empty?     ? nil : params[:socio_id].to_i      if params.key?('socio_id')
+        update[:descricao]     = params[:descricao].to_s.strip                                                  if params.key?('descricao') && !params[:descricao].to_s.strip.empty?
         update[:tipo_operacao] = params[:tipo_operacao].to_s.strip.empty? ? nil : params[:tipo_operacao]      if params.key?('tipo_operacao')
         update[:observacoes]   = params[:observacoes]                                                         if params.key?('observacoes')
 

@@ -103,8 +103,8 @@
           <tr class="hover:bg-slate-50 transition-colors">
             <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fmt_data(m[:data_movimentacao]) %></td>
             <td class="px-4 py-3"><%= badge_tipo(m[:tipo]) %></td>
-            <td class="px-4 py-3">
-              <div class="font-medium text-slate-800 max-w-[200px] truncate"><%= m[:descricao] %></div>
+            <td class="px-4 py-3 cursor-pointer group" onclick="abrirInlineTexto(this, 'descricao', <%= m[:id] %>, this)" title="Clique para editar descrição">
+              <div class="font-medium text-slate-800 max-w-[200px] truncate descricao-display-<%= m[:id] %>"><%= m[:descricao] %></div>
               <% if m[:is_antecipacao] %>
                 <span class="text-xs text-purple-600 font-medium">⚡ Antecipação</span>
               <% end %>
@@ -304,150 +304,186 @@
 <script>
 var _categorias = [
   <% @categorias.each do |c| %>
-  { id: <%= c[:id] %>, nome: "<%= c[:nome].gsub('"','\"') %>", cor: "<%= c[:cor] || '#94a3b8' %>", tipo: "<%= c[:tipo] %>" },
+  {id:<%= c[:id] %>,nome:"<%= c[:nome].to_s.gsub('\\','\\\\').gsub('"','\\"') %>",cor:"<%= c[:cor]||'#94a3b8' %>",tipo:"<%= c[:tipo] %>"},
   <% end %>
 ];
 var _clientes = [
   <% @clientes.each do |c| %>
-  { id: <%= c[:id] %>, nome: "<%= c[:nome].gsub('"','\"') %>" },
+  {id:<%= c[:id] %>,nome:"<%= c[:nome].to_s.gsub('\\','\\\\').gsub('"','\\"') %>"},
   <% end %>
 ];
 var _fornecedores = [
   <% @fornecedores.each do |f| %>
-  { id: <%= f[:id] %>, nome: "<%= f[:nome].gsub('"','\"') %>" },
+  {id:<%= f[:id] %>,nome:"<%= f[:nome].to_s.gsub('\\','\\\\').gsub('"','\\"') %>"},
   <% end %>
 ];
 var _socios = [
   <% @socios.each do |s| %>
-  { id: <%= s[:id] %>, nome: "<%= s[:nome].gsub('"','\"') %>", percentual: "<%= s[:percentual_participacao] %>" },
+  {id:<%= s[:id] %>,nome:"<%= s[:nome].to_s.gsub('\\','\\\\').gsub('"','\\"') %>",pct:"<%= s[:percentual_participacao] %>"},
   <% end %>
 ];
 
-var _inlineAtivo = null;
+// ── estado global ──────────────────────────────────────────────
+var _ctx = null;   // contexto do inline ativo
 
+function _fechar() {
+  if (!_ctx) return;
+  if (_ctx.widget && _ctx.widget.parentNode) _ctx.widget.parentNode.removeChild(_ctx.widget);
+  _ctx.cell.querySelectorAll('[data-inline-hide]').forEach(function(el){ el.hidden = false; });
+  _ctx = null;
+}
+
+// ── SELECT (categoria / parte) ──────────────────────────────────
 function abrirInline(cell, tipo, movId) {
-  // Fechar inline anterior sem salvar
-  if (_inlineAtivo) fecharInline(_inlineAtivo, false);
+  if (_ctx) _fechar();
 
-  var select = document.createElement('select');
-  select.className = 'text-xs border border-indigo-400 rounded px-1.5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 min-w-[140px] max-w-[200px]';
-  select.innerHTML = '<option value="">— remover —</option>';
+  var sel = document.createElement('select');
+  sel.className = 'text-xs border-2 border-indigo-400 rounded px-1.5 py-1 bg-white shadow focus:outline-none min-w-[150px]';
+  sel.appendChild(new Option('— remover —', ''));
 
   if (tipo === 'categoria') {
-    var grupos = {};
-    _categorias.forEach(function(c) {
-      if (!grupos[c.tipo]) grupos[c.tipo] = [];
-      grupos[c.tipo].push(c);
-    });
-    Object.keys(grupos).forEach(function(t) {
+    ['receita','despesa'].forEach(function(t) {
       var og = document.createElement('optgroup');
       og.label = t === 'receita' ? 'Receitas' : 'Despesas';
-      grupos[t].forEach(function(c) {
-        var o = new Option(c.nome, c.id);
-        og.appendChild(o);
+      _categorias.filter(function(c){return c.tipo===t;}).forEach(function(c){
+        og.appendChild(new Option(c.nome, c.id));
       });
-      select.appendChild(og);
+      sel.appendChild(og);
     });
   } else {
-    // Parte: cliente, fornecedor ou sócio
-    var ogCli = document.createElement('optgroup'); ogCli.label = 'Clientes';
-    _clientes.forEach(function(c) { ogCli.appendChild(new Option(c.nome, 'cli_' + c.id)); });
-    var ogForn = document.createElement('optgroup'); ogForn.label = 'Fornecedores';
-    _fornecedores.forEach(function(f) { ogForn.appendChild(new Option(f.nome, 'forn_' + f.id)); });
-    var ogSoc = document.createElement('optgroup'); ogSoc.label = 'Sócios';
-    _socios.forEach(function(s) { ogSoc.appendChild(new Option('👤 ' + s.nome + ' (' + s.percentual + '%)', 'soc_' + s.id)); });
-    select.appendChild(ogCli);
-    select.appendChild(ogForn);
-    select.appendChild(ogSoc);
+    var ogC = document.createElement('optgroup'); ogC.label = 'Clientes';
+    _clientes.forEach(function(c){ ogC.appendChild(new Option(c.nome, 'cli_'+c.id)); });
+    var ogF = document.createElement('optgroup'); ogF.label = 'Fornecedores';
+    _fornecedores.forEach(function(f){ ogF.appendChild(new Option(f.nome, 'forn_'+f.id)); });
+    var ogS = document.createElement('optgroup'); ogS.label = 'Sócios';
+    _socios.forEach(function(s){ ogS.appendChild(new Option('👤 '+s.nome+' ('+s.pct+'%)', 'soc_'+s.id)); });
+    [ogC,ogF,ogS].forEach(function(og){ sel.appendChild(og); });
   }
 
-  _inlineAtivo = { cell: cell, tipo: tipo, movId: movId, select: select };
+  _ctx = {cell:cell, tipo:tipo, movId:movId, widget:sel, kind:'select'};
+  cell.querySelectorAll('span').forEach(function(el){ el.setAttribute('data-inline-hide',''); el.hidden=true; });
+  cell.appendChild(sel);
 
-  // Ocultar conteúdo atual e mostrar select
-  cell.querySelectorAll('span').forEach(function(s) { s.style.display = 'none'; });
-  cell.appendChild(select);
-  select.focus();
-
-  select.addEventListener('change', function() { salvarInline(_inlineAtivo); });
-  select.addEventListener('blur',   function() { setTimeout(function() { fecharInline(_inlineAtivo, false); }, 200); });
-  select.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') fecharInline(_inlineAtivo, false);
+  // ── Usar mousedown para capturar a seleção ANTES do blur ──
+  sel.addEventListener('mousedown', function(e){
+    // Marcar que uma opção foi clicada, para não fechar no blur
+    sel._selecting = true;
   });
+  sel.addEventListener('change', function(){
+    sel._selecting = false;
+    _salvarSelect(_ctx);
+  });
+  sel.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') { sel._selecting = false; _fechar(); }
+    if (e.key === 'Enter')  { sel._selecting = false; _salvarSelect(_ctx); }
+  });
+  sel.addEventListener('blur', function(){
+    // Só fechar se não está no meio de selecionar uma opção
+    if (!sel._selecting) setTimeout(_fechar, 150);
+  });
+
+  sel.focus();
 }
 
-function fecharInline(ctx, restaurar) {
-  if (!ctx) return;
-  if (ctx.select && ctx.select.parentNode) ctx.select.parentNode.removeChild(ctx.select);
-  ctx.cell.querySelectorAll('span').forEach(function(s) { s.style.display = ''; });
-  _inlineAtivo = null;
-}
-
-function salvarInline(ctx) {
-  var val = ctx.select.value;
+function _salvarSelect(ctx) {
+  var val  = ctx.widget.value;
   var body = {};
-
   if (ctx.tipo === 'categoria') {
     body.categoria_id = val;
   } else {
-    // Limpar todos os campos de parte antes de definir o novo
-    body.cliente_id    = '';
-    body.fornecedor_id = '';
-    body.socio_id      = '';
-    if (val.startsWith('cli_'))  body.cliente_id    = val.replace('cli_', '');
-    if (val.startsWith('forn_')) body.fornecedor_id = val.replace('forn_', '');
-    if (val.startsWith('soc_'))  body.socio_id      = val.replace('soc_', '');
+    body.cliente_id = ''; body.fornecedor_id = ''; body.socio_id = '';
+    if (val.startsWith('cli_'))  body.cliente_id    = val.slice(4);
+    if (val.startsWith('forn_')) body.fornecedor_id = val.slice(5);
+    if (val.startsWith('soc_'))  body.socio_id      = val.slice(4);
   }
-
-  // Feedback visual de loading
-  ctx.select.disabled = true;
-  ctx.select.style.opacity = '0.5';
-
-  var fd = new FormData();
-  Object.keys(body).forEach(function(k) { fd.append(k, body[k]); });
-
-  fetch('/movimentacoes/' + ctx.movId + '/quick-update', { method: 'POST', body: fd })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (!data.ok) { fecharInline(ctx, false); return; }
-
-      if (ctx.tipo === 'categoria') {
-        var span = ctx.cell.querySelector('.categoria-display-' + ctx.movId);
-        if (!span) { span = document.createElement('span'); span.className = 'categoria-display-' + ctx.movId + ' inline-flex items-center gap-1'; ctx.cell.appendChild(span); }
-        if (data.categoria_nome) {
-          span.innerHTML = '<span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color:' + data.categoria_cor + '"></span><span class="text-slate-600 text-xs">' + data.categoria_nome + '</span>';
-        } else {
-          span.innerHTML = '<span class="text-slate-300 text-xs group-hover:text-slate-400">+ categoria</span>';
-        }
-      } else {
-        var span = ctx.cell.querySelector('.parte-display-' + ctx.movId);
-        if (!span) { span = document.createElement('span'); span.className = 'parte-display-' + ctx.movId + ' text-slate-600 text-xs'; ctx.cell.appendChild(span); }
-        if (data.socio_nome) {
-          span.innerHTML = '<span class="text-purple-600 font-medium">👤 ' + data.socio_nome + ' (' + data.socio_percentual + '%)</span>';
-        } else if (data.cliente_nome) {
-          span.innerHTML = data.cliente_nome;
-          span.className = 'parte-display-' + ctx.movId + ' text-slate-600 text-xs';
-        } else if (data.fornecedor_nome) {
-          span.innerHTML = data.fornecedor_nome;
-          span.className = 'parte-display-' + ctx.movId + ' text-slate-600 text-xs';
-        } else {
-          span.innerHTML = '<span class="text-slate-300 group-hover:text-slate-400">+ vincular</span>';
-        }
-      }
-
-      fecharInline(ctx, false);
-
-      // Flash de sucesso na célula
-      ctx.cell.style.background = '#d1fae5';
-      setTimeout(function() { ctx.cell.style.background = ''; }, 800);
-    })
-    .catch(function() { fecharInline(ctx, false); });
+  _quickSave(ctx, body, function(data){ _atualizarCelulaSelect(ctx, data); });
 }
 
-// Fechar ao clicar fora
-document.addEventListener('click', function(e) {
-  if (_inlineAtivo && !_inlineAtivo.cell.contains(e.target)) {
-    fecharInline(_inlineAtivo, false);
+function _atualizarCelulaSelect(ctx, data) {
+  if (ctx.tipo === 'categoria') {
+    var el = ctx.cell.querySelector('.categoria-display-'+ctx.movId);
+    if (data.categoria_nome) {
+      el.innerHTML = '<span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color:'+data.categoria_cor+'"></span>'
+                   + '<span class="text-slate-600 text-xs">'+data.categoria_nome+'</span>';
+    } else {
+      el.innerHTML = '<span class="text-slate-300 text-xs">+ categoria</span>';
+    }
+  } else {
+    var el = ctx.cell.querySelector('.parte-display-'+ctx.movId);
+    if (data.socio_nome) {
+      el.innerHTML = '<span class="text-purple-600 font-medium">👤 '+data.socio_nome+' ('+data.socio_percentual+'%)</span>';
+    } else if (data.cliente_nome || data.fornecedor_nome) {
+      el.textContent = data.cliente_nome || data.fornecedor_nome;
+    } else {
+      el.innerHTML = '<span class="text-slate-300">+ vincular</span>';
+    }
   }
+}
+
+// ── INPUT TEXTO (descrição) ─────────────────────────────────────
+function abrirInlineTexto(cell, campo, movId) {
+  if (_ctx) _fechar();
+
+  var displayEl = cell.querySelector('.'+campo+'-display-'+movId);
+  var valorAtual = displayEl ? displayEl.textContent.trim() : '';
+
+  var inp = document.createElement('input');
+  inp.type = 'text';
+  inp.value = valorAtual;
+  inp.className = 'text-sm border-2 border-indigo-400 rounded px-2 py-1 bg-white shadow focus:outline-none w-full min-w-[180px]';
+
+  _ctx = {cell:cell, tipo:campo, movId:movId, widget:inp, kind:'text', displayEl:displayEl};
+  if (displayEl) { displayEl.setAttribute('data-inline-hide',''); displayEl.hidden = true; }
+  // Inserir antes do displayEl ou no início da célula
+  cell.insertBefore(inp, cell.firstChild);
+
+  inp.focus();
+  inp.select();
+
+  inp.addEventListener('keydown', function(e){
+    if (e.key === 'Enter')  { e.preventDefault(); _salvarTexto(_ctx); }
+    if (e.key === 'Escape') { _fechar(); }
+  });
+  inp.addEventListener('blur', function(){
+    // Só salva se o valor mudou
+    if (inp.value.trim() !== valorAtual) _salvarTexto(_ctx);
+    else _fechar();
+  });
+}
+
+function _salvarTexto(ctx) {
+  var val = ctx.widget.value.trim();
+  if (!val) { _fechar(); return; }
+  var body = {};
+  body[ctx.tipo] = val;
+  _quickSave(ctx, body, function(data){
+    if (ctx.displayEl) ctx.displayEl.textContent = val;
+  });
+}
+
+// ── HTTP helper ─────────────────────────────────────────────────
+function _quickSave(ctx, body, onSuccess) {
+  ctx.widget.disabled = true;
+  ctx.widget.style.opacity = '0.5';
+  var fd = new FormData();
+  Object.keys(body).forEach(function(k){ fd.append(k, body[k]); });
+  fetch('/movimentacoes/'+ctx.movId+'/quick-update', {method:'POST', body:fd})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.ok) {
+        _fechar();
+        onSuccess(data);
+        ctx.cell.style.transition = 'background 0.1s';
+        ctx.cell.style.background = '#d1fae5';
+        setTimeout(function(){ ctx.cell.style.background = ''; }, 700);
+      } else { _fechar(); }
+    })
+    .catch(_fechar);
+}
+
+// Fechar ao clicar fora de qualquer inline ativo
+document.addEventListener('mousedown', function(e){
+  if (_ctx && !_ctx.cell.contains(e.target)) _fechar();
 });
 </script>
 
