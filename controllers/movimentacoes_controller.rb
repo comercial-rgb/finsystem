@@ -219,6 +219,97 @@ module FinSystem
       end
 
       # ========================================
+      # CONVERTER MOVIMENTAÇÃO EM TRANSFERÊNCIA
+      # ========================================
+      post '/movimentacoes/:id/converter-transferencia' do
+        db = FinSystem::Database.db
+        mov = Models::Movimentacao.find(params[:id].to_i)
+        halt 404, 'Movimentação não encontrada' unless mov
+
+        conta_destino_id = params[:conta_destino_id].to_i
+        halt 422, 'Selecione a conta destino' if conta_destino_id == 0
+        halt 422, 'Conta destino igual à origem' if conta_destino_id == mov[:conta_bancaria_id]
+
+        conta_destino = db[:contas_bancarias]
+                          .left_join(:empresas, Sequel[:empresas][:id] => Sequel[:contas_bancarias][:empresa_id])
+                          .where(Sequel[:contas_bancarias][:id] => conta_destino_id)
+                          .select_all(:contas_bancarias)
+                          .select_append(Sequel[:empresas][:nome_fantasia].as(:empresa_nome))
+                          .first
+        halt 404, 'Conta destino não encontrada' unless conta_destino
+
+        conta_origem = db[:contas_bancarias]
+                         .left_join(:empresas, Sequel[:empresas][:id] => Sequel[:contas_bancarias][:empresa_id])
+                         .where(Sequel[:contas_bancarias][:id] => mov[:conta_bancaria_id])
+                         .select_all(:contas_bancarias)
+                         .select_append(Sequel[:empresas][:nome_fantasia].as(:empresa_nome))
+                         .first
+
+        descricao = params[:descricao].to_s.strip
+        descricao = "Transferência #{conta_origem[:banco]} → #{conta_destino[:banco]}" if descricao.empty?
+
+        db.transaction do
+          # 1. Atualizar movimentação de origem para status transferencia
+          db[:movimentacoes].where(id: mov[:id]).update(
+            tipo:            'despesa',
+            tipo_operacao:   'transferencia',
+            status:          'transferencia',
+            descricao:       "Transferência para #{conta_destino[:banco]}#{conta_destino[:apelido] ? ' (' + conta_destino[:apelido] + ')' : ''} - #{conta_destino[:empresa_nome]}",
+            pago:            true,
+            updated_at:      Time.now
+          )
+
+          # 2. Criar movimentação de entrada na conta destino
+          entrada_id = db[:movimentacoes].insert(
+            empresa_id:        conta_destino[:empresa_id],
+            conta_bancaria_id: conta_destino_id,
+            usuario_id:        usuario_logado[:id],
+            tipo:              'receita',
+            data_movimentacao: mov[:data_movimentacao],
+            data_competencia:  mov[:data_competencia] || mov[:data_movimentacao],
+            descricao:         "Transferência de #{conta_origem[:banco]}#{conta_origem[:apelido] ? ' (' + conta_origem[:apelido] + ')' : ''} - #{conta_origem[:empresa_nome]}",
+            valor_bruto:       mov[:valor_bruto],
+            valor_liquido:     mov[:valor_liquido] || mov[:valor_bruto],
+            lucro:             0,
+            tipo_operacao:     'transferencia',
+            status:            'transferencia',
+            pago:              true,
+            tipo_cobranca:     'unica',
+            forma_pagamento:   mov[:forma_pagamento] || 'ted',
+            observacoes:       descricao
+          )
+
+          # 3. Registrar na tabela de transferências
+          db[:transferencias].insert(
+            conta_origem_id:         mov[:conta_bancaria_id],
+            conta_destino_id:        conta_destino_id,
+            usuario_id:              usuario_logado[:id],
+            valor:                   mov[:valor_bruto],
+            data_transferencia:      mov[:data_movimentacao],
+            descricao:               descricao,
+            movimentacao_saida_id:   mov[:id],
+            movimentacao_entrada_id: entrada_id
+          )
+
+          # 4. Recalcular saldos de ambas as contas
+          Models::Movimentacao.atualizar_saldo_conta(mov[:conta_bancaria_id])
+          Models::Movimentacao.atualizar_saldo_conta(conta_destino_id)
+        end
+
+        Models::AuditLog.registrar(
+          usuario_id: usuario_logado[:id],
+          acao: 'update',
+          entidade: 'movimentacao',
+          entidade_id: mov[:id],
+          detalhes: "Convertida para transferência → conta #{conta_destino_id}",
+          ip: request.ip
+        )
+
+        session[:flash_message] = "Transferência registrada! Saldo das duas contas atualizado."
+        redirect back
+      end
+
+      # ========================================
       # CONCILIAÇÃO BANCÁRIA
       # ========================================
       post '/movimentacoes/:id/conciliar' do
