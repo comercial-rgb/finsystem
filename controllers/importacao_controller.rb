@@ -148,7 +148,8 @@ module FinSystem
                 descricao:         t['descricao'],
                 valor_bruto:       ('%.2f' % t['valor'].to_f).gsub('.', ','),
                 valor_liquido:     ('%.2f' % t['valor'].to_f).gsub('.', ','),
-                lucro:             '0',
+                # Para extratos bancários, lucro = valor total nas receitas (não há distinção de margem)
+                lucro:             t['tipo'] == 'receita' ? ('%.2f' % t['valor'].to_f).gsub('.', ',') : '0',
                 tipo_cobranca:     'unica',
                 status:            status_import,
                 forma_pagamento:   'outros',
@@ -192,6 +193,25 @@ module FinSystem
         @contas             = Models::Empresa.todas_contas
 
         erb :'importacao/reset_completo', layout: :'layouts/application'
+      end
+
+      # Corrigir lucro=0 nas receitas já importadas via extrato
+      post '/importacao/corrigir-lucro' do
+        db = FinSystem::Database.db
+        atualizadas = db[:movimentacoes]
+          .where(observacoes: 'Importado via extrato bancário', tipo: 'receita')
+          .where(lucro: 0)
+          .update(lucro: Sequel[:valor_bruto])
+
+        Models::AuditLog.registrar(
+          usuario_id: usuario_logado[:id],
+          acao: 'update', entidade: 'importacao_extrato',
+          detalhes: "Corrigido lucro=0 em #{atualizadas} receitas importadas via extrato",
+          ip: request.ip
+        )
+
+        session[:flash_message] = "#{atualizadas} receita(s) corrigida(s). Dashboard atualizado."
+        redirect '/importacao'
       end
 
       post '/importacao/reset-completo/confirmar' do
