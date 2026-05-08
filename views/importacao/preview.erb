@@ -37,8 +37,13 @@
   </div>
   <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
     <p class="text-xs text-slate-500 uppercase tracking-wide">Saldo líquido</p>
-    <p class="text-2xl font-bold <%= total_receitas - total_despesas >= 0 ? 'text-emerald-600' : 'text-red-500' %> mt-1">
-      <%= formatar_moeda(total_receitas - total_despesas) %>
+    <%
+      saldo_liq = total_receitas - total_despesas
+      saldo_fmt = "R$ #{'%.2f' % saldo_liq.abs}".gsub('.', ',')
+      saldo_fmt = "-#{saldo_fmt}" if saldo_liq < 0
+    %>
+    <p class="text-2xl font-bold <%= saldo_liq >= 0 ? 'text-emerald-600' : 'text-red-500' %> mt-1">
+      <%= saldo_fmt %>
     </p>
   </div>
 </div>
@@ -126,7 +131,7 @@
                 <% end %>
               </td>
               <td class="px-4 py-3 text-right font-semibold <%= t[:tipo] == 'receita' ? 'text-emerald-600' : 'text-red-500' %> whitespace-nowrap">
-                <%= formatar_moeda(t[:valor]) %>
+                R$ <%= '%.2f' % t[:valor].to_f %>
               </td>
               <td class="px-4 py-3">
                 <select name="categoria_linha[<%= t[:idx] %>]"
