@@ -31,32 +31,48 @@ module FinSystem
       # OFX / OFC  (padrão Febraban BR)
       # ======================================
       def self.parse_ofx(path)
-        raw = File.read(path, encoding: 'iso-8859-1')
+        # Tenta UTF-8 primeiro, cai para ISO-8859-1 (padrão dos bancos BR)
+        raw = begin
+          File.read(path, encoding: 'utf-8')
+        rescue
+          File.read(path, encoding: 'iso-8859-1')
                .encode('utf-8', invalid: :replace, undef: :replace)
+        end
+
+        # Remove BOM se existir
+        raw.sub!("\xEF\xBB\xBF", '')
 
         transactions = []
 
-        # OFX pode ser SGML (sem fechamento de tags) ou XML (com </>)
-        raw.scan(/<STMTTRN>(.*?)(?:<\/STMTTRN>|(?=<STMTTRN>)|$)/mi) do |block|
-          t = block[0]
-          dtposted = extract_ofx_field(t, 'DTPOSTED')
-          amount   = extract_ofx_field(t, 'TRNAMT')
-          memo     = extract_ofx_field(t, 'MEMO') || extract_ofx_field(t, 'NAME') || 'Importado OFX'
-          fitid    = extract_ofx_field(t, 'FITID')
+        # Split por <STMTTRN> — funciona para SGML (sem fechamento) e XML OFX
+        blocks = raw.split(/<STMTTRN>/i)
+        blocks.shift  # descarta cabeçalho antes do primeiro bloco
+
+        blocks.each do |block|
+          # Para XML OFX: corta no </STMTTRN>
+          block = block.split(/<\/STMTTRN>/i).first || block
+
+          dtposted = extract_ofx_field(block, 'DTPOSTED')
+          amount   = extract_ofx_field(block, 'TRNAMT')
+          memo     = extract_ofx_field(block, 'MEMO') ||
+                     extract_ofx_field(block, 'NAME') ||
+                     'Importado OFX'
+          fitid    = extract_ofx_field(block, 'FITID')
 
           next unless dtposted && amount
 
-          date = parse_date(dtposted[0..7])   # YYYYMMDD
+          # DTPOSTED pode ser: 20250401, 20250401120000, 20250401120000[-3:BRT]
+          date = parse_date(dtposted.gsub(/[^0-9].*$/, '')[0..7])
           next unless date
 
-          valor = amount.gsub(',', '.').to_f
+          valor = amount.strip.gsub(',', '.').to_f
           tipo  = valor >= 0 ? 'receita' : 'despesa'
 
           transactions << {
-            data: date,
-            descricao: sanitize(memo),
-            valor: valor.abs,
-            tipo: tipo,
+            data:       date,
+            descricao:  sanitize(memo),
+            valor:      valor.abs,
+            tipo:       tipo,
             referencia: fitid
           }
         end
