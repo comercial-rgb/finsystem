@@ -61,6 +61,11 @@ module FinSystem
 
           next unless dtposted && amount
 
+          # Ignorar linhas de saldo (Itaú e outros bancos inserem saldo do dia no OFX)
+          trntype = extract_ofx_field(block, 'TRNTYPE')&.upcase || ''
+          next if trntype == 'SALDO'
+          next if (memo.to_s =~ /\bsaldo\b/i) && valor_parece_saldo?(amount)
+
           # DTPOSTED pode ser: 20250401, 20250401120000, 20250401120000[-3:BRT]
           date = parse_date(dtposted.gsub(/[^0-9].*$/, '')[0..7])
           next unless date
@@ -317,6 +322,12 @@ module FinSystem
 
       def self.detect_col(headers, pattern)
         headers.find { |h| h&.match?(pattern) }
+      end
+
+      # Heurística: se o memo é "saldo" e o valor não tem sinal negativo,
+      # provavelmente é linha de saldo corrente, não uma transação
+      def self.valor_parece_saldo?(amount_str)
+        !amount_str.to_s.strip.start_with?('-')
       end
 
       def self.sanitize(str)

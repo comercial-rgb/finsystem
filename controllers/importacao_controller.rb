@@ -184,6 +184,47 @@ module FinSystem
       end
 
       # ========================================
+      # RESET COMPLETO — ZERAR TODAS AS MOVIMENTAÇÕES
+      # ========================================
+      get '/importacao/reset-completo' do
+        @total_movs         = db[:movimentacoes].count
+        @total_transferencias = db[:transferencias].count rescue 0
+        @contas             = Models::Empresa.todas_contas
+
+        erb :'importacao/reset_completo', layout: :'layouts/application'
+      end
+
+      post '/importacao/reset-completo/confirmar' do
+        confirmacao = params[:confirmacao].to_s.strip
+
+        unless confirmacao == 'CONFIRMAR RESET'
+          session[:flash_error] = 'Digite exatamente "CONFIRMAR RESET" para prosseguir.'
+          redirect '/importacao/reset-completo'
+        end
+
+        db.transaction do
+          db[:historico_saldos].delete rescue nil
+          db[:transferencias].delete   rescue nil
+          db[:comprovantes].delete     rescue nil
+          db[:movimentacoes].delete
+
+          # Zera saldo_atual = saldo_inicial em todas as contas
+          db[:contas_bancarias].update(saldo_atual: Sequel[:saldo_inicial])
+        end
+
+        Models::AuditLog.registrar(
+          usuario_id: usuario_logado[:id],
+          acao: 'delete',
+          entidade: 'reset_completo',
+          detalhes: 'Reset completo: todas as movimentações excluídas',
+          ip: request.ip
+        )
+
+        session[:flash_message] = 'Reset concluído. Todas as movimentações foram apagadas. Saldos zerados ao valor inicial.'
+        redirect '/importacao'
+      end
+
+      # ========================================
       # LIMPEZA — EXCLUIR IMPORTAÇÕES COM ERRO
       # ========================================
       get '/importacao/limpar-erros' do
