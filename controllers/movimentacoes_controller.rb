@@ -26,8 +26,12 @@ module FinSystem
         @page = (params[:page] || 1).to_i
         @per_page = 25
 
-        @empresas = Models::Empresa.todas
-        @contas = Models::Empresa.todas_contas
+        @empresas   = Models::Empresa.todas
+        @contas     = Models::Empresa.todas_contas
+        @categorias = FinSystem::Database.db[:categorias].where(ativo: true).order(:nome).all
+        @clientes   = FinSystem::Database.db[:clientes].where(ativo: true).order(:nome).all
+        @fornecedores = FinSystem::Database.db[:fornecedores].where(ativo: true).order(:nome).all
+        @socios     = FinSystem::Database.db[:socios].where(ativo: true).order(:nome).all
 
         filtros = {
           mes: @mes, ano: @ano, empresa_id: @empresa_id,
@@ -216,6 +220,43 @@ module FinSystem
 
         session[:flash_message] = 'Movimentação excluída!'
         redirect '/movimentacoes'
+      end
+
+      # ========================================
+      # EDIÇÃO RÁPIDA (inline na tabela)
+      # ========================================
+      post '/movimentacoes/:id/quick-update' do
+        content_type :json
+        id = params[:id].to_i
+        mov = Models::Movimentacao.find(id)
+        halt 404, { error: 'Não encontrada' }.to_json unless mov
+
+        db = FinSystem::Database.db
+        update = { updated_at: Time.now }
+
+        update[:categoria_id]  = params[:categoria_id].to_s.strip.empty? ? nil : params[:categoria_id].to_i  if params.key?('categoria_id')
+        update[:cliente_id]    = params[:cliente_id].to_s.strip.empty?   ? nil : params[:cliente_id].to_i    if params.key?('cliente_id')
+        update[:fornecedor_id] = params[:fornecedor_id].to_s.strip.empty? ? nil : params[:fornecedor_id].to_i if params.key?('fornecedor_id')
+        update[:socio_id]      = params[:socio_id].to_s.strip.empty?     ? nil : params[:socio_id].to_i      if params.key?('socio_id')
+        update[:tipo_operacao] = params[:tipo_operacao].to_s.strip.empty? ? nil : params[:tipo_operacao]      if params.key?('tipo_operacao')
+        update[:observacoes]   = params[:observacoes]                                                         if params.key?('observacoes')
+
+        db[:movimentacoes].where(id: id).update(update)
+
+        # Buscar nomes para retornar ao frontend
+        cat  = update[:categoria_id]  ? db[:categorias].where(id: update[:categoria_id]).first   : nil
+        cli  = update[:cliente_id]    ? db[:clientes].where(id: update[:cliente_id]).first        : nil
+        forn = update[:fornecedor_id] ? db[:fornecedores].where(id: update[:fornecedor_id]).first : nil
+        soc  = update[:socio_id]      ? db[:socios].where(id: update[:socio_id]).first            : nil
+
+        { ok: true,
+          categoria_nome: cat&.dig(:nome),
+          categoria_cor:  cat&.dig(:cor),
+          cliente_nome:   cli&.dig(:nome),
+          fornecedor_nome: forn&.dig(:nome),
+          socio_nome:     soc&.dig(:nome),
+          socio_percentual: soc&.dig(:percentual_participacao)
+        }.to_json
       end
 
       # ========================================

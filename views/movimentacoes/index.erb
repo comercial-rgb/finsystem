@@ -112,19 +112,28 @@
                 <div class="text-xs text-slate-400">Doc: <%= m[:numero_documento] %></div>
               <% end %>
             </td>
-            <td class="px-4 py-3">
-              <% if m[:categoria_nome] %>
-                <span class="inline-flex items-center gap-1">
-                  <span class="w-2 h-2 rounded-full" style="background-color: <%= m[:categoria_cor] %>"></span>
+            <td class="px-4 py-3 cursor-pointer group" onclick="abrirInline(this, 'categoria', <%= m[:id] %>)" title="Clique para editar categoria">
+              <span class="inline-flex items-center gap-1 categoria-display-<%= m[:id] %>">
+                <% if m[:categoria_nome] %>
+                  <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: <%= m[:categoria_cor] || '#94a3b8' %>"></span>
                   <span class="text-slate-600 text-xs"><%= m[:categoria_nome] %></span>
-                </span>
-              <% end %>
+                <% else %>
+                  <span class="text-slate-300 text-xs group-hover:text-slate-400">+ categoria</span>
+                <% end %>
+              </span>
             </td>
-            <td class="px-4 py-3 text-slate-600 text-xs">
-              <%= m[:cliente_nome] || m[:fornecedor_nome] || '-' %>
-              <% if m[:socio_nome] %>
-                <div class="text-purple-600 font-medium">👤 <%= m[:socio_nome] %> (<%= m[:socio_percentual] %>%)</div>
-              <% end %>
+            <td class="px-4 py-3 cursor-pointer group" onclick="abrirInline(this, 'parte', <%= m[:id] %>)" title="Clique para editar cliente/fornecedor/sócio">
+              <span class="parte-display-<%= m[:id] %> text-slate-600 text-xs">
+                <% if m[:socio_nome] %>
+                  <span class="text-purple-600 font-medium">👤 <%= m[:socio_nome] %> (<%= m[:socio_percentual] %>%)</span>
+                <% elsif m[:cliente_nome] %>
+                  <%= m[:cliente_nome] %>
+                <% elsif m[:fornecedor_nome] %>
+                  <%= m[:fornecedor_nome] %>
+                <% else %>
+                  <span class="text-slate-300 group-hover:text-slate-400">+ vincular</span>
+                <% end %>
+              </span>
             </td>
             <td class="px-4 py-3 text-slate-600 text-xs"><%= m[:empresa_nome] %></td>
             <td class="px-4 py-3 text-slate-600 text-xs"><%= m[:banco_nome] %></td>
@@ -290,6 +299,157 @@
     </div>
   </div>
 </div>
+
+<!-- Dados inline para selects -->
+<script>
+var _categorias = [
+  <% @categorias.each do |c| %>
+  { id: <%= c[:id] %>, nome: "<%= c[:nome].gsub('"','\"') %>", cor: "<%= c[:cor] || '#94a3b8' %>", tipo: "<%= c[:tipo] %>" },
+  <% end %>
+];
+var _clientes = [
+  <% @clientes.each do |c| %>
+  { id: <%= c[:id] %>, nome: "<%= c[:nome].gsub('"','\"') %>" },
+  <% end %>
+];
+var _fornecedores = [
+  <% @fornecedores.each do |f| %>
+  { id: <%= f[:id] %>, nome: "<%= f[:nome].gsub('"','\"') %>" },
+  <% end %>
+];
+var _socios = [
+  <% @socios.each do |s| %>
+  { id: <%= s[:id] %>, nome: "<%= s[:nome].gsub('"','\"') %>", percentual: "<%= s[:percentual_participacao] %>" },
+  <% end %>
+];
+
+var _inlineAtivo = null;
+
+function abrirInline(cell, tipo, movId) {
+  // Fechar inline anterior sem salvar
+  if (_inlineAtivo) fecharInline(_inlineAtivo, false);
+
+  var select = document.createElement('select');
+  select.className = 'text-xs border border-indigo-400 rounded px-1.5 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 min-w-[140px] max-w-[200px]';
+  select.innerHTML = '<option value="">— remover —</option>';
+
+  if (tipo === 'categoria') {
+    var grupos = {};
+    _categorias.forEach(function(c) {
+      if (!grupos[c.tipo]) grupos[c.tipo] = [];
+      grupos[c.tipo].push(c);
+    });
+    Object.keys(grupos).forEach(function(t) {
+      var og = document.createElement('optgroup');
+      og.label = t === 'receita' ? 'Receitas' : 'Despesas';
+      grupos[t].forEach(function(c) {
+        var o = new Option(c.nome, c.id);
+        og.appendChild(o);
+      });
+      select.appendChild(og);
+    });
+  } else {
+    // Parte: cliente, fornecedor ou sócio
+    var ogCli = document.createElement('optgroup'); ogCli.label = 'Clientes';
+    _clientes.forEach(function(c) { ogCli.appendChild(new Option(c.nome, 'cli_' + c.id)); });
+    var ogForn = document.createElement('optgroup'); ogForn.label = 'Fornecedores';
+    _fornecedores.forEach(function(f) { ogForn.appendChild(new Option(f.nome, 'forn_' + f.id)); });
+    var ogSoc = document.createElement('optgroup'); ogSoc.label = 'Sócios';
+    _socios.forEach(function(s) { ogSoc.appendChild(new Option('👤 ' + s.nome + ' (' + s.percentual + '%)', 'soc_' + s.id)); });
+    select.appendChild(ogCli);
+    select.appendChild(ogForn);
+    select.appendChild(ogSoc);
+  }
+
+  _inlineAtivo = { cell: cell, tipo: tipo, movId: movId, select: select };
+
+  // Ocultar conteúdo atual e mostrar select
+  cell.querySelectorAll('span').forEach(function(s) { s.style.display = 'none'; });
+  cell.appendChild(select);
+  select.focus();
+
+  select.addEventListener('change', function() { salvarInline(_inlineAtivo); });
+  select.addEventListener('blur',   function() { setTimeout(function() { fecharInline(_inlineAtivo, false); }, 200); });
+  select.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') fecharInline(_inlineAtivo, false);
+  });
+}
+
+function fecharInline(ctx, restaurar) {
+  if (!ctx) return;
+  if (ctx.select && ctx.select.parentNode) ctx.select.parentNode.removeChild(ctx.select);
+  ctx.cell.querySelectorAll('span').forEach(function(s) { s.style.display = ''; });
+  _inlineAtivo = null;
+}
+
+function salvarInline(ctx) {
+  var val = ctx.select.value;
+  var body = {};
+
+  if (ctx.tipo === 'categoria') {
+    body.categoria_id = val;
+  } else {
+    // Limpar todos os campos de parte antes de definir o novo
+    body.cliente_id    = '';
+    body.fornecedor_id = '';
+    body.socio_id      = '';
+    if (val.startsWith('cli_'))  body.cliente_id    = val.replace('cli_', '');
+    if (val.startsWith('forn_')) body.fornecedor_id = val.replace('forn_', '');
+    if (val.startsWith('soc_'))  body.socio_id      = val.replace('soc_', '');
+  }
+
+  // Feedback visual de loading
+  ctx.select.disabled = true;
+  ctx.select.style.opacity = '0.5';
+
+  var fd = new FormData();
+  Object.keys(body).forEach(function(k) { fd.append(k, body[k]); });
+
+  fetch('/movimentacoes/' + ctx.movId + '/quick-update', { method: 'POST', body: fd })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) { fecharInline(ctx, false); return; }
+
+      if (ctx.tipo === 'categoria') {
+        var span = ctx.cell.querySelector('.categoria-display-' + ctx.movId);
+        if (!span) { span = document.createElement('span'); span.className = 'categoria-display-' + ctx.movId + ' inline-flex items-center gap-1'; ctx.cell.appendChild(span); }
+        if (data.categoria_nome) {
+          span.innerHTML = '<span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color:' + data.categoria_cor + '"></span><span class="text-slate-600 text-xs">' + data.categoria_nome + '</span>';
+        } else {
+          span.innerHTML = '<span class="text-slate-300 text-xs group-hover:text-slate-400">+ categoria</span>';
+        }
+      } else {
+        var span = ctx.cell.querySelector('.parte-display-' + ctx.movId);
+        if (!span) { span = document.createElement('span'); span.className = 'parte-display-' + ctx.movId + ' text-slate-600 text-xs'; ctx.cell.appendChild(span); }
+        if (data.socio_nome) {
+          span.innerHTML = '<span class="text-purple-600 font-medium">👤 ' + data.socio_nome + ' (' + data.socio_percentual + '%)</span>';
+        } else if (data.cliente_nome) {
+          span.innerHTML = data.cliente_nome;
+          span.className = 'parte-display-' + ctx.movId + ' text-slate-600 text-xs';
+        } else if (data.fornecedor_nome) {
+          span.innerHTML = data.fornecedor_nome;
+          span.className = 'parte-display-' + ctx.movId + ' text-slate-600 text-xs';
+        } else {
+          span.innerHTML = '<span class="text-slate-300 group-hover:text-slate-400">+ vincular</span>';
+        }
+      }
+
+      fecharInline(ctx, false);
+
+      // Flash de sucesso na célula
+      ctx.cell.style.background = '#d1fae5';
+      setTimeout(function() { ctx.cell.style.background = ''; }, 800);
+    })
+    .catch(function() { fecharInline(ctx, false); });
+}
+
+// Fechar ao clicar fora
+document.addEventListener('click', function(e) {
+  if (_inlineAtivo && !_inlineAtivo.cell.contains(e.target)) {
+    fecharInline(_inlineAtivo, false);
+  }
+});
+</script>
 
 <script>
 var movData = {};
