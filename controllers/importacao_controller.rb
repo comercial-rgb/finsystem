@@ -183,6 +183,52 @@ module FinSystem
         redirect '/movimentacoes'
       end
 
+      # ========================================
+      # LIMPEZA — EXCLUIR IMPORTAÇÕES COM ERRO
+      # ========================================
+      get '/importacao/limpar-erros' do
+        @movs = db[:movimentacoes]
+                  .where(observacoes: 'Importado via extrato bancário')
+                  .left_join(:contas_bancarias, Sequel[:contas_bancarias][:id] => Sequel[:movimentacoes][:conta_bancaria_id])
+                  .left_join(:empresas, Sequel[:empresas][:id] => Sequel[:movimentacoes][:empresa_id])
+                  .select_all(:movimentacoes)
+                  .select_append(Sequel[:contas_bancarias][:banco].as(:banco_nome))
+                  .select_append(Sequel[:contas_bancarias][:apelido].as(:conta_apelido))
+                  .select_append(Sequel[:empresas][:nome_fantasia].as(:empresa_nome))
+                  .order(Sequel.desc(Sequel[:movimentacoes][:data_movimentacao]))
+                  .all
+
+        erb :'importacao/limpar_erros', layout: :'layouts/application'
+      end
+
+      post '/importacao/limpar-erros/confirmar' do
+        ids = db[:movimentacoes]
+                .where(observacoes: 'Importado via extrato bancário')
+                .select_map(:id)
+
+        contas_afetadas = db[:movimentacoes]
+                            .where(id: ids)
+                            .select_map(:conta_bancaria_id)
+                            .uniq
+
+        db[:movimentacoes].where(id: ids).delete
+
+        contas_afetadas.each do |conta_id|
+          Models::Movimentacao.atualizar_saldo_conta(conta_id)
+        end
+
+        Models::AuditLog.registrar(
+          usuario_id: usuario_logado[:id],
+          acao: 'delete',
+          entidade: 'importacao_extrato',
+          detalhes: "Excluídas #{ids.size} movimentações importadas com erro de valor",
+          ip: request.ip
+        )
+
+        session[:flash_message] = "#{ids.size} movimentação(ões) excluída(s). Saldos recalculados. Reimporte os extratos."
+        redirect '/importacao'
+      end
+
       private
 
       def db
